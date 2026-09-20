@@ -17,6 +17,7 @@ export interface SceneObject {
   color: number
   solid: SolidData
   /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
+  visible: boolean
   spec?: PrimitiveSpec
   /** Present on boolean results: how to rebuild `solid`, in the object's local frame. Never mutated. */
   tree?: CsgNode
@@ -27,6 +28,7 @@ interface ObjectState {
   id: number
   name: string
   color: number
+  visible: boolean
   solid: SolidData
   spec?: PrimitiveSpec
   tree?: CsgNode
@@ -109,7 +111,7 @@ export class CadDocument extends EventTarget {
     // New primitives are dropped on the origin, resting on the ground plane.
     if (spec) centre.set(0, 0, (box.max.z - box.min.z) / 2)
     const id = this.nextId++
-    const obj = this.insert({ id, name: `${name} ${id}`, color: DEFAULT_COLOR, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
+    const obj = this.insert({ id, name: `${name} ${id}`, color: DEFAULT_COLOR, visible: true, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
     this.select([obj])
     return obj
   }
@@ -162,6 +164,7 @@ export class CadDocument extends EventTarget {
     )
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
     this.applyXray(mesh.material)
+    mesh.visible = state.visible
     const obj: SceneObject = { ...state, mesh }
     this.objects.push(obj)
     this.view.scene.add(mesh)
@@ -214,11 +217,22 @@ export class CadDocument extends EventTarget {
     this.gizmo.setMode(mode)
   }
 
+  /** Sets the gizmo's translation snap in mm; rotate snap follows in 15-degree steps for < 5, 5 otherwise. */
+  setSnap(step: number) {
+    this.gizmo.setTranslationSnap(step)
+  }
+
+  toggleVisible(obj: SceneObject) {
+    obj.visible = !obj.visible
+    obj.mesh.visible = obj.visible
+    this.dispatchEvent(new Event('change'))
+  }
+
   /** Records the current state as one undo step. */
   commit() {
     const snapshot: Snapshot = this.objects.map((o) => {
       o.mesh.updateMatrix()
-      return { id: o.id, name: o.name, color: o.color, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
+      return { id: o.id, name: o.name, color: o.color, visible: o.visible, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
     })
     this.history.length = this.cursor + 1
     this.history.push(snapshot)
@@ -243,7 +257,7 @@ export class CadDocument extends EventTarget {
 
   /** Adds a copy of `src` at the given world matrix. Does not select it or record an undo step. */
   cloneAt(src: SceneObject, matrix: THREE.Matrix4): SceneObject {
-    return this.insert({ id: this.nextId++, name: `${src.name} copy`, color: src.color, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
+    return this.insert({ id: this.nextId++, name: `${src.name} copy`, color: src.color, visible: src.visible, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
   }
 
   /** Copies the selection, offset along X so the copies are visible. */

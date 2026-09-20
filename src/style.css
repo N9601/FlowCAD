@@ -79,6 +79,24 @@ body {
   color: var(--muted);
 }
 
+#panel .item.hidden .name {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+#panel .eye {
+  display: inline-block;
+  width: 14px;
+  margin-right: 4px;
+  color: var(--muted);
+  text-align: center;
+  cursor: pointer;
+}
+
+#panel .eye:hover {
+  color: var(--accent);
+}
+
 #panel .item {
   padding: 4px 8px;
   border-radius: 4px;

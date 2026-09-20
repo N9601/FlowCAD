@@ -162,7 +162,14 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     if (doc.objects.length === 0) list.appendChild(el('p', 'hint', 'Add a primitive from the toolbar.'))
     for (const obj of doc.objects) {
       const rank = doc.selection.indexOf(obj)
-      const item = list.appendChild(el('div', `item${rank === 0 ? ' primary' : rank > 0 ? ' secondary' : ''}`, obj.name))
+      const item = list.appendChild(el('div', `item${rank === 0 ? ' primary' : rank > 0 ? ' secondary' : ''}${obj.visible ? '' : ' hidden'}`))
+      const eye = item.appendChild(el('span', 'eye', obj.visible ? '●' : '○'))
+      eye.title = obj.visible ? 'Hide' : 'Show'
+      eye.addEventListener('click', (e) => {
+        e.stopPropagation()
+        doc.toggleVisible(obj)
+      })
+      item.appendChild(el('span', 'name', obj.name))
       item.addEventListener('click', (e) => {
         if (!e.shiftKey) doc.select([obj])
         else if (rank !== -1) doc.select(doc.selection.filter((o) => o !== obj))
@@ -323,6 +330,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
           parts.push({
             name: child.name,
             color: obj.color,
+            visible: obj.visible,
             solid: child.solid ?? (await csg.evaluate(local)),
             spec: child.spec,
             tree: child.op ? local : undefined,

@@ -65,6 +65,11 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   button(gizmo, 'Rotate (E)', () => doc.setGizmoMode('rotate'))
   button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
   button(gizmo, 'X-Ray (X)', () => doc.toggleXray())
+  const snapField = gizmo.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Snap' }))
+  const snap = snapField.appendChild(document.createElement('select'))
+  for (const value of [0.1, 0.5, 1, 5, 10]) snap.add(new Option(`${value} mm`, String(value)))
+  snap.value = '1'
+  snap.addEventListener('change', () => doc.setSnap(+snap.value))
 
   const views = group()
   button(views, 'Fit (F)', () => view.frame(doc.frameTargets))
