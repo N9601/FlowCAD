@@ -96,16 +96,20 @@ export function buildCommandPalette(doc: CadDocument, view: Viewport, status: HT
     if (e.target === overlay) setOpen(false)
   })
 
-  window.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault()
-      // Close any other open overlay first so only one modal is visible at a time.
-      for (const other of document.querySelectorAll('.help-overlay:not([hidden])')) (other as HTMLElement).hidden = true
-      setOpen(Boolean(overlay.hidden))
-    } else if (e.key === 'Escape' && !overlay.hidden) {
-      // Global escape closes the palette even if the input has lost focus.
-      e.preventDefault()
-      setOpen(false)
-    }
-  })
+  // Capture-phase listener so Escape closes the palette even if a nested widget consumed the event first.
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        for (const other of document.querySelectorAll('.help-overlay:not([hidden])')) (other as HTMLElement).hidden = true
+        setOpen(Boolean(overlay.hidden))
+      } else if (e.key === 'Escape' && !overlay.hidden) {
+        e.preventDefault()
+        e.stopPropagation()
+        setOpen(false)
+      }
+    },
+    true,
+  )
 }

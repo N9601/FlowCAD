@@ -59,17 +59,22 @@ export function buildHelp(toolbar: HTMLElement) {
   }
   toggle.addEventListener('click', openHelp)
 
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !overlay.hidden) {
-      e.preventDefault()
-      setOpen(false)
-      return
-    }
-    const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement
-    if (typing || e.ctrlKey || e.metaKey || e.altKey) return
-    if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
-      e.preventDefault()
-      openHelp()
-    }
-  })
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Escape' && !overlay.hidden) {
+        e.preventDefault()
+        e.stopPropagation()
+        setOpen(false)
+        return
+      }
+      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement
+      if (typing || e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault()
+        openHelp()
+      }
+    },
+    true,
+  )
 }
