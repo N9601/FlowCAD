@@ -28,7 +28,8 @@ export class Viewport {
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000)
     this.camera.position.set(90, -120, 80)
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true })
+    // preserveDrawingBuffer keeps the last frame available for canvas.toDataURL() screenshots.
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
     this.renderer.setPixelRatio(window.devicePixelRatio)
     container.appendChild(this.renderer.domElement)
 

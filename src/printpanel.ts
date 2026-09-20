@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { CadDocument } from './document'
 import { analyse, DEFAULT_PRINT_SETTINGS, flaggedGeometry, plaGrams, type PrintSettings } from './printcheck'
+import { autoFix } from './printfix'
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -9,7 +10,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
   return node
 }
 
-export function buildPrintCheck(toolbar: HTMLElement, panel: HTMLElement, doc: CadDocument) {
+export function buildPrintCheck(toolbar: HTMLElement, panel: HTMLElement, status: HTMLElement, doc: CadDocument) {
   const settings: PrintSettings = structuredClone(DEFAULT_PRINT_SETTINGS)
   const section = panel.appendChild(el('section', 'printcheck'))
   section.hidden = true
@@ -77,6 +78,26 @@ export function buildPrintCheck(toolbar: HTMLElement, panel: HTMLElement, doc: C
       const summary = totalIssues === 0 ? 'Everything checked is ready to print.' : `${totalIssues} issue${totalIssues > 1 ? 's' : ''} found. Red = needs support, amber = thin wall.`
       section.insertBefore(el('p', totalIssues === 0 ? 'hint pass' : 'hint', summary), section.children[1])
       section.appendChild(el('p', 'hint', `Total about ${totalGrams.toFixed(1)} g. Checked in ${(performance.now() - started).toFixed(0)} ms.`))
+    }
+
+    if (targets.length > 0 && totalIssues > 0) {
+      const fix = section.appendChild(el('button', 'fix', 'Fix issues automatically'))
+      fix.title = 'Reorient each part to the flattest side, scale down to fit the bed, and drop to Z = 0.'
+      fix.addEventListener('click', () => {
+        const changes: string[] = []
+        for (const obj of targets) {
+          const result = autoFix(obj, settings)
+          const actions = [result.reoriented && 'reoriented', result.scaled && 'scaled to fit', result.dropped && 'dropped to bed'].filter(Boolean)
+          if (actions.length > 0) changes.push(`${obj.name}: ${actions.join(', ')}`)
+        }
+        if (changes.length === 0) {
+          status.textContent = 'Nothing to fix automatically; overhangs and thin walls need manual work.'
+          return
+        }
+        doc.commit()
+        refresh()
+        status.textContent = `Auto-fix: ${changes.join('; ')}.`
+      })
     }
 
     section.appendChild(el('h3', undefined, 'Printer'))

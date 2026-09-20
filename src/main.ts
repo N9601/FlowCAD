@@ -20,7 +20,7 @@ buildMeasure($('#toolbar'), view, doc, $('#statusbar'))
 buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
 buildToolsPanel($('#panel').appendChild(document.createElement('section')), $('#statusbar'), doc)
-buildPrintCheck($('#toolbar'), $('#panel'), doc)
+buildPrintCheck($('#toolbar'), $('#panel'), $('#statusbar'), doc)
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
