@@ -169,3 +169,81 @@ const star = '10,0 4,3 8,10 0,4 -8,10 -4,3 -10,0 -4,-3 -8,-10 0,-4 8,-10 4,-3'
 
 fit()
 `
+
+
+/** Multi-landmark architectural showcase; used by the console's Architecture button. */
+export const SHOWCASE_ARCH_SCRIPT = `clear()
+
+// ================= Plaza =================
+const plaza = await roundedBox({ x: 340, y: 220, z: 8, radius: 3, segments: 32 })
+const label = (await text({ text: 'FLOWCAD METROPOLIS', letterHeight: 10, thickness: 3 })).at(0, -104, 8)
+;(await subtract(plaza, label)).name('Plaza').drop()
+
+// ================= Twisted skyscraper (left) =================
+// Extrude height 170; centred, so half-height is 85 above the base at Z = 8.
+const star = '18,0 7,5 14,17 0,6 -14,17 -7,5 -18,0 -7,-5 -14,-17 0,-6 14,-17 7,-5'
+;(await extrude({ profile: star, height: 170, twist: 220 })).at(-125, 0, 93).name('Torso tower')
+;(await cylinder({ radius: 12, height: 6, segments: 64 })).at(-125, 0, 181).name('Torso ring')
+;(await cone({ radius: 10, height: 30, segments: 48 })).at(-125, 0, 199).name('Torso spire')
+
+// ================= Classical temple (centre) =================
+;(await roundedBox({ x: 70, y: 50, z: 4, radius: 1, segments: 24 })).at(0, 0, 10).name('Stylobate')
+for (let i = 0; i < 4; i++) {
+  const x = -22.5 + i * 15
+  ;(await cylinder({ radius: 2.5, height: 20, segments: 32 })).at(x, -20, 22).name('Column F' + (i + 1))
+  ;(await cylinder({ radius: 2.5, height: 20, segments: 32 })).at(x, 20, 22).name('Column B' + (i + 1))
+}
+;(await roundedBox({ x: 70, y: 50, z: 4, radius: 1, segments: 24 })).at(0, 0, 34).name('Entablature')
+;(await extrude({ profile: '-35,0 35,0 0,12', height: 50 })).at(0, 0, 42).rotate(90, 0, 0).name('Pediment')
+
+// Staircase in front of the temple; widest at the bottom
+for (let i = 0; i < 4; i++) {
+  const above = 3 - i
+  const width = 70 + above * 4
+  ;(await cube({ x: width, y: 4, z: 1.5 })).at(0, -25 - i * 3, 8 + above * 1.5 + 0.75).name('Step ' + (i + 1))
+}
+
+// ================= Domed rotunda (right) =================
+;(await cylinder({ radius: 26, height: 24, segments: 96 })).at(125, 0, 20).name('Drum')
+for (let i = 0; i < 12; i++) {
+  const angle = i * 2 * Math.PI / 12
+  ;(await cube({ x: 2, y: 4, z: 24 })).at(125 + Math.cos(angle) * 26.5, Math.sin(angle) * 26.5, 20).rotate(0, 0, angle * 180 / Math.PI).name('Pilaster ' + (i + 1))
+}
+;(await dome({ radius: 26, segments: 96 })).at(125, 0, 32).name('Dome')
+;(await sphere({ radius: 4, segments: 48 })).at(125, 0, 61).name('Finial')
+
+for (let i = 0; i < 4; i++) {
+  const angle = Math.PI / 4 + i * Math.PI / 2
+  const x = 125 + Math.cos(angle) * 40
+  const y = Math.sin(angle) * 40
+  ;(await cylinder({ radius: 2, height: 50, segments: 24 })).at(x, y, 33).name('Minaret ' + (i + 1))
+  ;(await cone({ radius: 3.5, height: 10, segments: 24 })).at(x, y, 63).name('Minaret cap ' + (i + 1))
+  ;(await sphere({ radius: 1.5, segments: 20 })).at(x, y, 70).name('Minaret bead ' + (i + 1))
+}
+
+// ================= Fountain (front-centre) =================
+;(await cylinder({ radius: 12, height: 3, segments: 48 })).at(0, 80, 9.5).name('Fountain basin')
+;(await torus({ majorRadius: 14, minorRadius: 2, segments: 64 })).at(0, 80, 11).name('Fountain rim')
+;(await cylinder({ radius: 2, height: 12, segments: 24 })).at(0, 80, 17).name('Fountain jet')
+;(await sphere({ radius: 4, segments: 32 })).at(0, 80, 25).name('Fountain crown')
+
+// ================= Windmill (back-left) =================
+;(await cylinder({ radius: 6, height: 30, segments: 24 })).at(-115, -80, 23).name('Mill tower')
+;(await dome({ radius: 6, segments: 24 })).at(-115, -80, 38).name('Mill cap')
+;(await gear({ module: 1.2, teeth: 24, thickness: 1.5, bore: 3 })).at(-100, -80, 40).rotate(0, 90, 0).name('Mill wheel')
+;(await cylinder({ radius: 1, height: 12, segments: 12 })).at(-108, -80, 40).rotate(0, 90, 0).name('Mill shaft')
+
+// ================= Decorative gears (right-back) =================
+;(await gear({ module: 1.5, teeth: 30, thickness: 3, bore: 5 })).at(90, 85, 10).name('Gear big')
+;(await gear({ module: 1.5, teeth: 20, thickness: 3, bore: 4 })).at(60, 85, 10).name('Gear small')
+;(await bolt({ size: 6, length: 20 })).at(90, 85, 11.5).name('Gear bolt')
+
+// ================= Corner bollards =================
+for (let i = 0; i < 4; i++) {
+  const x = i % 2 === 0 ? -160 : 160
+  const y = i < 2 ? -100 : 100
+  ;(await capsule({ radius: 3, length: 20, segments: 24 })).at(x, y, 18).name('Bollard ' + (i + 1))
+}
+
+fit()
+`
