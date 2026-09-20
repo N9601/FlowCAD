@@ -71,6 +71,20 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
 
   push('edit.undo', 'Undo', 'back revert history', () => doc.undo())
   push('edit.settle', 'Physics settle', 'drop gravity fall pack', () => settleWithPhysics(doc))
+  push('edit.surprise', 'Surprise me', 'random shapes fun demo', async () => {
+    doc.remove([...doc.objects])
+    const all = CATEGORIES.flatMap((c) => c.shapes)
+    const pick = () => all[Math.floor(Math.random() * all.length)]
+    for (let i = 0; i < 8; i++) {
+      const shape = pick()
+      const obj = await addShape(doc, shape.label, shape.spec)
+      obj.mesh.position.set((Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, obj.mesh.position.z)
+      obj.mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI)
+    }
+    doc.commit()
+    view.frame(doc.frameTargets)
+    status.textContent = `Surprise: ${doc.objects.length} random shapes`
+  })
   push('edit.redo', 'Redo', 'forward history', () => doc.redo())
   push('edit.duplicate', 'Duplicate', 'copy clone', requireSelection('any', () => doc.duplicate()))
   push('edit.delete', 'Delete', 'remove erase', requireSelection('any', () => { doc.remove([...doc.selection]); doc.commit() }))
