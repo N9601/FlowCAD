@@ -205,6 +205,7 @@ button:disabled {
   color: var(--muted);
 }
 
+#toolbar select,
 #toolbar .field input {
   width: 60px;
   font: inherit;

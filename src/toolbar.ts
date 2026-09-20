@@ -1,9 +1,11 @@
 import { combine } from './actions'
 import { csg } from './csg/client'
-import type { BooleanOp } from './csg/protocol'
+import type { BooleanOp, SolidData } from './csg/protocol'
 import type { CadDocument } from './document'
 import type { ViewName, Viewport } from './viewport'
+import { decodeGlb, encodeGlb } from './io/gltf'
 import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
+import { decodePly, encodePly } from './io/ply'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
@@ -98,15 +100,16 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   )
   const importFiles = async (files: Iterable<File>) => {
     for (const f of files) {
-      const decode = { stl: decodeStl, obj: decodeObj }[f.name.split('.').pop()!.toLowerCase()]
-      if (!decode) throw new Error(`${f.name}: only STL and OBJ files can be imported`)
+      const decoders: Record<string, (data: ArrayBuffer) => SolidData> = { stl: decodeStl, obj: decodeObj, glb: decodeGlb, ply: decodePly }
+      const decode = decoders[f.name.split('.').pop()!.toLowerCase()]
+      if (!decode) throw new Error(`${f.name}: only STL, OBJ, GLB and PLY files can be imported`)
       status.textContent = `Importing ${f.name}...`
       const solid = await csg.validate(decode(await f.arrayBuffer()))
       doc.add(f.name.replace(/\.[^.]+$/, ''), solid)
       doc.commit()
     }
   }
-  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.stl,.obj', multiple: true })
+  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.stl,.obj,.glb,.ply', multiple: true })
   picker.addEventListener('change', async () => {
     try {
       await importFiles(picker.files ?? [])
@@ -126,20 +129,23 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       status.textContent = `Error: ${err instanceof Error ? err.message : err}`
     }
   })
-  const exporters: { ext: string; encode: (parts: NamedPart[]) => ArrayBuffer }[] = [
-    { ext: 'stl', encode: encodeBinaryStl },
-    { ext: 'obj', encode: encodeObj },
-    { ext: '3mf', encode: encode3mf },
-  ]
-  for (const { ext, encode } of exporters) {
-    needsAny.push(
-      button(file, `Export ${ext.toUpperCase()}`, () => {
-        const targets = doc.selection.length > 0 ? doc.selection : doc.objects
-        download(encode(targets.map((o) => ({ name: o.name, ...doc.placed(o) }))), `flowcad.${ext}`)
-        status.textContent = `Exported ${targets.length} object(s) to flowcad.${ext}`
-      }),
-    )
+  const exporters: Record<string, (parts: NamedPart[]) => ArrayBuffer> = {
+    stl: encodeBinaryStl,
+    obj: encodeObj,
+    '3mf': encode3mf,
+    glb: encodeGlb,
+    ply: encodePly,
   }
+  const format = file.appendChild(document.createElement('select'))
+  for (const ext of Object.keys(exporters)) format.add(new Option(ext.toUpperCase(), ext))
+  needsAny.push(
+    button(file, 'Export', () => {
+      const ext = format.value
+      const targets = doc.selection.length > 0 ? doc.selection : doc.objects
+      download(exporters[ext](targets.map((o) => ({ name: o.name, ...doc.placed(o) }))), `flowcad.${ext}`)
+      status.textContent = `Exported ${targets.length} object(s) to flowcad.${ext}`
+    }),
+  )
 
   const cut = group()
   const cutLabel = cut.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Section Z' }))
