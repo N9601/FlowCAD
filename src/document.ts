@@ -23,6 +23,9 @@ export interface SceneObject {
 /** Solids are immutable once added, so snapshots share them by reference. */
 type Snapshot = { id: number; name: string; solid: SolidData; spec?: PrimitiveSpec; matrix: THREE.Matrix4 }[]
 
+/** Plain-data form of the scene, safe for structured clone into IndexedDB. */
+export type SavedDocument = { id: number; name: string; solid: SolidData; spec?: PrimitiveSpec; matrix: number[] }[]
+
 const geometryCache = new WeakMap<SolidData, THREE.BufferGeometry>()
 
 /** Shifts the vertices so the bounding-box centre is the origin; returns the old centre and the box. */
@@ -162,6 +165,35 @@ export class CadDocument extends EventTarget {
     if (this.history.length > MAX_HISTORY) this.history.shift()
     this.cursor = this.history.length - 1
     this.dispatchEvent(new Event('change'))
+    this.dispatchEvent(new Event('saved-state'))
+  }
+
+  serialize(): SavedDocument {
+    return this.history[this.cursor].map((s) => ({ ...s, matrix: s.matrix.toArray() }))
+  }
+
+  /** Replaces the scene with saved data and restarts the undo history from it. */
+  load(saved: SavedDocument) {
+    const snapshot: Snapshot = saved.map((s) => ({ ...s, matrix: new THREE.Matrix4().fromArray(s.matrix) }))
+    this.nextId = Math.max(0, ...saved.map((s) => s.id)) + 1
+    this.history = [snapshot]
+    this.cursor = 0
+    this.restore(snapshot)
+  }
+
+  /** Copies the selection, offset along X so the copies are visible. */
+  duplicate() {
+    const copies = this.selection.map((src) => {
+      src.mesh.updateMatrix()
+      const size = new THREE.Box3().setFromObject(src.mesh).getSize(new THREE.Vector3())
+      const matrix = src.mesh.matrix.clone()
+      matrix.elements[12] += size.x + 5
+      const id = this.nextId++
+      return this.insert(id, `${src.name} copy`, src.solid, matrix, src.spec)
+    })
+    if (copies.length === 0) return
+    this.select(copies)
+    this.commit()
   }
 
   get canUndo() {
@@ -173,11 +205,15 @@ export class CadDocument extends EventTarget {
   }
 
   undo() {
-    if (this.canUndo) this.restore(this.history[--this.cursor])
+    if (!this.canUndo) return
+    this.restore(this.history[--this.cursor])
+    this.dispatchEvent(new Event('saved-state'))
   }
 
   redo() {
-    if (this.canRedo) this.restore(this.history[++this.cursor])
+    if (!this.canRedo) return
+    this.restore(this.history[++this.cursor])
+    this.dispatchEvent(new Event('saved-state'))
   }
 
   private restore(snapshot: Snapshot) {

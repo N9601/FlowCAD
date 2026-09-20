@@ -73,6 +73,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   }
   const undo = button(edit, 'Undo', () => doc.undo())
   const redo = button(edit, 'Redo', () => doc.redo())
+  needsOne.push(button(edit, 'Duplicate', () => doc.duplicate()))
   needsOne.push(button(edit, 'Delete', deleteSelection))
 
   const gizmo = group()
@@ -86,6 +87,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     if (e.ctrlKey || e.metaKey) {
       if (key === 'z' && !e.shiftKey) doc.undo()
       else if (key === 'y' || (key === 'z' && e.shiftKey)) doc.redo()
+      else if (key === 'd') doc.duplicate()
       else return
       e.preventDefault()
     } else if (key === 'delete' || key === 'backspace') deleteSelection()
@@ -96,6 +98,12 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   })
 
   const file = group()
+  needsAny.push(
+    button(file, 'New', () => {
+      doc.remove([...doc.objects])
+      doc.commit()
+    }),
+  )
   const importFiles = async (files: Iterable<File>) => {
     for (const f of files) {
       if (!f.name.toLowerCase().endsWith('.stl')) throw new Error(`${f.name}: only STL import is supported so far`)
