@@ -8,6 +8,7 @@ import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-forma
 import { decodePly, encodePly } from './io/ply'
 import { decodeProject, encodeProject } from './io/project'
 import { encodeBlueprint } from './io/blueprint'
+import { encodeStandaloneHtml } from './io/html'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
@@ -164,6 +165,12 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     button(file, 'Blueprint', () => {
       download(encodeBlueprint(doc, view), 'flowcad-blueprint.svg')
       status.textContent = 'Exported 4-view blueprint to flowcad-blueprint.svg'
+    }),
+  )
+  needsAny.push(
+    button(file, 'Share HTML', () => {
+      download(encodeStandaloneHtml(doc), 'flowcad-share.html')
+      status.textContent = 'Exported standalone HTML viewer'
     }),
   )
   const exporters: Record<string, (parts: NamedPart[]) => ArrayBuffer> = {

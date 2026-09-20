@@ -13,6 +13,7 @@ import { download, encodeBinaryStl } from './io/stl'
 import type { Viewport } from './viewport'
 import { addShape } from './actions'
 import { settleWithPhysics } from './physics'
+import { encodeStandaloneHtml } from './io/html'
 
 export interface Command {
   id: string
@@ -100,6 +101,10 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
   push('file.save', 'Save project (.flowcad)', 'export json', () => {
     download(encodeProject(doc.serialize()), 'project.flowcad')
     status.textContent = `Saved ${doc.objects.length} object(s) to project.flowcad`
+  })
+  push('file.share-html', 'Share as HTML', 'export standalone shareable web viewer', () => {
+    download(encodeStandaloneHtml(doc), 'flowcad-share.html')
+    status.textContent = 'Exported standalone HTML viewer (open in any browser)'
   })
   push('file.blueprint', 'Export blueprint (4-view SVG)', 'drawing print', () => {
     download(encodeBlueprint(doc, view), 'flowcad-blueprint.svg')
