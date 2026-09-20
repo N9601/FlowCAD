@@ -2,6 +2,7 @@ import { Matrix4 } from 'three'
 import { csg } from './csg/client'
 import type { BooleanOp } from './csg/protocol'
 import type { CadDocument } from './document'
+import type { ViewName, Viewport } from './viewport'
 import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
@@ -12,7 +13,7 @@ const BOOLEANS: { label: string; op: BooleanOp }[] = [
   { label: 'Intersect', op: 'intersect' },
 ]
 
-export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDocument) {
+export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDocument, view: Viewport) {
   const needsTwo: HTMLButtonElement[] = []
   const needsOne: HTMLButtonElement[] = []
   const needsAny: HTMLButtonElement[] = []
@@ -67,6 +68,13 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
   button(gizmo, 'X-Ray (X)', () => doc.toggleXray())
 
+  const views = group()
+  button(views, 'Fit (F)', () => view.frame(doc.frameTargets))
+  const VIEW_KEYS: Record<string, ViewName> = { '1': 'front', '2': 'right', '3': 'top', '4': 'iso' }
+  for (const [key, name] of Object.entries(VIEW_KEYS)) {
+    button(views, `${name[0].toUpperCase()}${name.slice(1)} (${key})`, () => view.frame(doc.frameTargets, name))
+  }
+
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
     const key = e.key.toLowerCase()
@@ -82,6 +90,8 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     else if (key === 'e') doc.setGizmoMode('rotate')
     else if (key === 'r') doc.setGizmoMode('scale')
     else if (key === 'x') doc.toggleXray()
+    else if (key === 'f') view.frame(doc.frameTargets)
+    else if (key in VIEW_KEYS) view.frame(doc.frameTargets, VIEW_KEYS[key])
   })
 
   const file = group()

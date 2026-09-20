@@ -4,6 +4,16 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 // CAD convention: Z is up, units are millimetres.
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1)
 
+export type ViewName = 'iso' | 'top' | 'front' | 'right'
+
+// Direction from the target towards the camera. Top is tilted a hair so "up" stays well defined.
+const VIEW_DIRECTIONS: Record<ViewName, THREE.Vector3> = {
+  iso: new THREE.Vector3(1, -1.3, 0.9).normalize(),
+  top: new THREE.Vector3(0, -0.0001, 1).normalize(),
+  front: new THREE.Vector3(0, -1, 0),
+  right: new THREE.Vector3(1, 0, 0),
+}
+
 export class Viewport {
   readonly scene = new THREE.Scene()
   readonly camera: THREE.PerspectiveCamera
@@ -39,6 +49,25 @@ export class Viewport {
     new ResizeObserver(() => this.resize()).observe(container)
     this.resize()
     this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera))
+  }
+
+  /** Frames the given objects (or a default area when empty), optionally from a standard direction. */
+  frame(objects: readonly THREE.Object3D[], view?: ViewName) {
+    const box = new THREE.Box3()
+    for (const object of objects) box.expandByObject(object)
+    if (box.isEmpty()) box.set(new THREE.Vector3(-40, -40, 0), new THREE.Vector3(40, 40, 40))
+
+    const sphere = box.getBoundingSphere(new THREE.Sphere())
+    const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2)
+    const narrowest = Math.min(halfFov, Math.atan(Math.tan(halfFov) * this.camera.aspect))
+    const distance = (sphere.radius / Math.sin(narrowest)) * 1.1
+    const direction = view
+      ? VIEW_DIRECTIONS[view]
+      : this.camera.position.clone().sub(this.controls.target).normalize()
+
+    this.controls.target.copy(sphere.center)
+    this.camera.position.copy(sphere.center).addScaledVector(direction, distance)
+    this.controls.update()
   }
 
   private resize() {

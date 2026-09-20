@@ -187,6 +187,11 @@ export class CadDocument extends EventTarget {
     this.dispatchEvent(new Event('change'))
   }
 
+  /** Meshes to frame: the selection, or everything when nothing is selected. */
+  get frameTargets(): THREE.Object3D[] {
+    return (this.selection.length > 0 ? this.selection : this.objects).map((o) => o.mesh)
+  }
+
   toggleXray() {
     this.xray = !this.xray
     for (const obj of this.objects) this.applyXray(obj.mesh.material)

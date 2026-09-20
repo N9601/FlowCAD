@@ -10,7 +10,7 @@ const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!
 
 const view = new Viewport($('#viewport'))
 const doc = new CadDocument(view)
-buildToolbar($('#toolbar'), $('#statusbar'), doc)
+buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
 
