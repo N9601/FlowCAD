@@ -119,7 +119,32 @@ export class CadDocument extends EventTarget {
     })
     this.gizmo.addEventListener('objectChange', () => {
       const mesh = this.gizmo.object
-      if (mesh && groupOffsets.size > 0) {
+      if (!mesh) return
+      // Bounding-box face snap while translating: pull the moving object's face onto a neighbour's.
+      const AXIS: Record<string, 0 | 1 | 2> = { X: 0, Y: 1, Z: 2 }
+      const axis = AXIS[this.gizmo.axis as string]
+      if (this.gizmo.mode === 'translate' && axis !== undefined) {
+        const moving = new THREE.Box3().setFromObject(mesh)
+        const movingObj = this.objects.find((o) => o.mesh === mesh)
+        const others = this.objects.filter((o) => o.mesh !== mesh && o.visible && !this.selection.includes(o))
+        const threshold = 2 // mm
+        let best: { delta: number; abs: number } | undefined
+        const record = (delta: number) => {
+          const abs = Math.abs(delta)
+          if (abs < threshold && (!best || abs < best.abs)) best = { delta, abs }
+        }
+        for (const other of others) {
+          if (movingObj && movingObj.groupId !== undefined && other.groupId === movingObj.groupId) continue
+          const otherBox = new THREE.Box3().setFromObject(other.mesh)
+          record(otherBox.max.getComponent(axis) - moving.min.getComponent(axis))
+          record(otherBox.min.getComponent(axis) - moving.max.getComponent(axis))
+          const movingCentre = (moving.min.getComponent(axis) + moving.max.getComponent(axis)) / 2
+          const otherCentre = (otherBox.min.getComponent(axis) + otherBox.max.getComponent(axis)) / 2
+          record(otherCentre - movingCentre)
+        }
+        if (best) mesh.position.setComponent(axis, mesh.position.getComponent(axis) + best.delta)
+      }
+      if (groupOffsets.size > 0) {
         mesh.updateMatrix()
         for (const [obj, offset] of groupOffsets) {
           const target = mesh.matrix.clone().multiply(offset)
