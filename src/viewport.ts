@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
 import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
@@ -25,6 +26,7 @@ export class Viewport {
   readonly renderer: THREE.WebGLRenderer
   readonly controls: OrbitControls
   readonly outlinePass: OutlinePass
+  private readonly gtaoPass: GTAOPass
   private readonly composer: EffectComposer
   private readonly container: HTMLElement
 
@@ -85,9 +87,13 @@ export class Viewport {
     ground.receiveShadow = true
     this.scene.add(ground)
 
-    // Post-processing pipeline: normal render + outline pass around selected objects.
+    // Post-processing pipeline: normal render + GTAO for depth in crevices + outline pass for selection.
     this.composer = new EffectComposer(this.renderer)
     this.composer.addPass(new RenderPass(this.scene, this.camera))
+    this.gtaoPass = new GTAOPass(this.scene, this.camera, 1, 1)
+    this.gtaoPass.blendIntensity = 0.6
+    this.gtaoPass.updateGtaoMaterial({ radius: 4, thickness: 0.5, scale: 1 })
+    this.composer.addPass(this.gtaoPass)
     this.outlinePass = new OutlinePass(new THREE.Vector2(1, 1), this.scene, this.camera)
     this.outlinePass.edgeStrength = 6
     this.outlinePass.edgeGlow = 0.6
@@ -161,6 +167,7 @@ export class Viewport {
     this.renderer.setSize(width, height, false)
     this.composer.setSize(width, height)
     this.outlinePass.setSize(width, height)
+    this.gtaoPass.setSize(width, height)
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
     try {
@@ -170,6 +177,7 @@ export class Viewport {
       this.renderer.setSize(previous.x, previous.y, false)
       this.composer.setSize(previous.x, previous.y)
       this.outlinePass.setSize(previous.x, previous.y)
+      this.gtaoPass.setSize(previous.x, previous.y)
       this.camera.aspect = aspect
       this.camera.updateProjectionMatrix()
     }
@@ -183,5 +191,6 @@ export class Viewport {
     this.renderer.setSize(w, h, false)
     this.composer.setSize(w, h)
     this.outlinePass.setSize(w, h)
+    this.gtaoPass.setSize(w, h)
   }
 }
