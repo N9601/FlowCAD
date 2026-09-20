@@ -312,6 +312,18 @@ button:disabled {
   color: #ff7b72;
 }
 
+.measure-label {
+  position: absolute;
+  transform: translate(-50%, -140%);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #1b1e23;
+  background: #ffd24d;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .marquee {
   position: absolute;
   border: 1px solid var(--accent);

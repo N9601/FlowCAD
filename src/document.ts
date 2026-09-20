@@ -75,6 +75,8 @@ export class CadDocument extends EventTarget {
   private history: Snapshot[] = [[]]
   private cursor = 0
   private xray = false
+  /** Turned off while another tool (measure) owns clicks in the viewport. */
+  pickingEnabled = true
 
   constructor(view: Viewport) {
     super()
@@ -312,7 +314,7 @@ export class CadDocument extends EventTarget {
 
     dom.addEventListener('pointerdown', (e) => {
       down.set(e.clientX, e.clientY)
-      boxing = e.button === 0 && e.shiftKey && !this.gizmo.axis
+      boxing = this.pickingEnabled && e.button === 0 && e.shiftKey && !this.gizmo.axis
       // Shift-drag draws a selection box instead of orbiting the camera.
       if (boxing) this.view.controls.enabled = false
     })
@@ -335,7 +337,7 @@ export class CadDocument extends EventTarget {
           return
         }
       }
-      if (e.button !== 0 || this.gizmo.axis) return
+      if (!this.pickingEnabled || e.button !== 0 || this.gizmo.axis) return
       if (down.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) > CLICK_SLOP_PX) return
 
       const rect = dom.getBoundingClientRect()

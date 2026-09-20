@@ -1,6 +1,7 @@
 import './style.css'
 import { buildConsole } from './console'
 import { CadDocument, type SavedDocument } from './document'
+import { buildMeasure } from './measure'
 import { buildPalette } from './palette'
 import { buildPanel } from './panel'
 import { buildPrintCheck } from './printpanel'
@@ -15,6 +16,7 @@ const view = new Viewport($('#scene'))
 const doc = new CadDocument(view)
 buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildConsole($('#toolbar'), $('#viewport'), doc, view)
+buildMeasure($('#toolbar'), view, doc, $('#statusbar'))
 buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
 buildToolsPanel($('#panel').appendChild(document.createElement('section')), $('#statusbar'), doc)
