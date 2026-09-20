@@ -29,7 +29,8 @@ export const CATEGORIES: { title: string; shapes: Shape[] }[] = [
       { label: 'Round box', spec: { kind: 'roundedBox', x: 30, y: 20, z: 12, radius: 3, segments: 32 } },
       { label: 'Dome', spec: { kind: 'dome', radius: 12, segments: 64 } },
       { label: 'Revolve', spec: { kind: 'revolve', profile: '0,0 14,0 14,4 6,8 6,26 10,30 0,30', angle: 360, segments: 64 } },
-      { label: 'Extrude', spec: { kind: 'extrude', profile: '0,0 30,0 30,8 8,8 8,20 0,20', height: 10, twist: 0 } },
+      { label: 'Extrude', spec: { kind: 'extrude', profile: '0,0 30,0 30,8 8,8 8,20 0,20', height: 10, twist: 0, taper: 1 } },
+      { label: 'ArcSphere', spec: { kind: 'arcSphere', radius: 15, startZ: 0, endZ: 15, segments: 48 } },
       { label: 'Text', spec: { kind: 'text', text: 'FlowCAD', letterHeight: 10, thickness: 3 } },
       { label: 'Capsule', spec: { kind: 'capsule', radius: 6, length: 30, segments: 48 } },
     ],
@@ -68,6 +69,8 @@ export function checkSpec(spec: PrimitiveSpec) {
   }
   if (spec.kind === 'revolve') parseProfile(spec.profile, true)
   if (spec.kind === 'extrude') parseProfile(spec.profile, false)
+  if (spec.kind === 'extrude' && spec.taper < 0) throw new Error('Taper cannot be negative')
+  if (spec.kind === 'arcSphere' && spec.startZ >= spec.endZ) throw new Error('Start Z must be less than end Z')
   if (spec.kind === 'pipe') parsePath(spec.path)
   if (spec.kind === 'spring' && spec.turns <= 0) throw new Error('Spring needs at least one turn')
   if (spec.kind === 'text' && (spec.text.trim() === '' || spec.text.length > 60)) {

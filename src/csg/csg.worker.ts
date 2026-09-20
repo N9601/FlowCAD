@@ -67,8 +67,19 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
     case 'revolve':
       return wasm.Manifold.revolve(parseProfile(spec.profile, true), spec.segments, spec.angle)
     case 'extrude': {
-      const steps = Math.min(1800, Math.ceil(Math.abs(spec.twist) / 2))
-      return wasm.Manifold.extrude(parseProfile(spec.profile, false), spec.height, steps, spec.twist, [1, 1], true)
+      const steps = Math.max(spec.taper !== 1 ? 1 : 0, Math.min(1800, Math.ceil(Math.abs(spec.twist) / 2)))
+      const taper = Math.max(0.001, spec.taper)
+      return wasm.Manifold.extrude(parseProfile(spec.profile, false), spec.height, steps, spec.twist, [taper, taper], true)
+    }
+    case 'arcSphere': {
+      const ball = wasm.Manifold.sphere(spec.radius, spec.segments)
+      if (spec.startZ <= -spec.radius && spec.endZ >= spec.radius) return ball
+      // Clip to the requested Z band; trimByPlane keeps the side the normal points into.
+      const clippedBottom = spec.startZ > -spec.radius ? ball.trimByPlane([0, 0, 1], spec.startZ) : ball
+      if (clippedBottom !== ball) ball.delete()
+      const finalClip = spec.endZ < spec.radius ? clippedBottom.trimByPlane([0, 0, -1], -spec.endZ) : clippedBottom
+      if (finalClip !== clippedBottom) clippedBottom.delete()
+      return finalClip
     }
     case 'pipe':
       return pipe(wasm, parsePath(spec.path), spec.radius, spec.segments)

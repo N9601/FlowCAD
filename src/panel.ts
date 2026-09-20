@@ -54,6 +54,13 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
     { key: 'profile', label: 'Profile x,y', min: 0, step: 1, string: true },
     mm('height', 'Height'),
     { key: 'twist', label: 'Twist (deg)', min: -3600, max: 3600, step: 15 },
+    { key: 'taper', label: 'Taper top scale', min: 0.01, max: 10, step: 0.1 },
+  ],
+  arcSphere: [
+    mm('radius', 'Radius'),
+    { key: 'startZ', label: 'Bottom Z (mm)', min: -1000, step: 1 },
+    { key: 'endZ', label: 'Top Z (mm)', min: -1000, step: 1 },
+    SEGMENTS,
   ],
   pipe: [
     { key: 'path', label: 'Path x,y,z', min: 0, step: 1, string: true },

@@ -23,7 +23,8 @@ export type PrimitiveSpec =
   /** `profile` is "radius,height" points; the outline is turned around the Z axis. */
   | { kind: 'revolve'; profile: string; angle: number; segments: number }
   /** `profile` is "x,y" points; `twist` is in degrees over the full height. */
-  | { kind: 'extrude'; profile: string; height: number; twist: number }
+  | { kind: 'extrude'; profile: string; height: number; twist: number; taper: number }
+  | { kind: 'arcSphere'; radius: number; startZ: number; endZ: number; segments: number }
   | { kind: 'text'; text: string; letterHeight: number; thickness: number }
   | { kind: 'bolt'; size: number; length: number }
   | { kind: 'nut'; size: number; clearance: number }
