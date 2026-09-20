@@ -267,3 +267,59 @@ for (let i = 0; i < 4; i++) {
 
 fit()
 `
+
+
+/** Mechanical assembly showcase: housing, gears, spring, pipe, pulley. */
+export const SHOWCASE_MECH_SCRIPT = `clear()
+
+// Base plate with mounting holes and a big through-bore
+const base = await roundedBox({ x: 180, y: 120, z: 10, radius: 4 })
+const bore = (await cylinder({ radius: 18, height: 30 })).at(0, 0, 5)
+const holes = []
+for (const [x, y] of [[-70, -40], [70, -40], [-70, 40], [70, 40]]) {
+  holes.push((await cylinder({ radius: 4, height: 20 })).at(x, y, 5))
+}
+;(await subtract(base, bore, ...holes)).name('Base').color('#7a8a99')
+
+// Rounded gear housing on top of the base
+const housing = await cube({ x: 60, y: 60, z: 30 })
+const roundedHousing = (await housing.fillet(6)).at(0, 0, 25).color('#8899aa').name('Housing')
+const window1 = (await cube({ x: 40, y: 62, z: 20 })).at(0, 0, 26)
+const finalHousing = (await subtract(roundedHousing, window1)).color('#8899aa').name('Gear housing')
+
+// Meshed spur gears inside the window
+;(await gear({ module: 2, teeth: 20, thickness: 8, bore: 5 })).at(-10, 0, 25).color('#c0864a').name('Drive gear')
+;(await gear({ module: 2, teeth: 12, thickness: 8, bore: 4 })).at(22, 0, 25).color('#c0864a').name('Driven gear')
+
+// Two bearing hubs projecting from the housing
+for (const x of [-10, 22]) {
+  ;(await cylinder({ radius: 6, height: 6, segments: 48 })).at(x, 30, 25).rotate(90, 0, 0).color('#334455').name('Hub ' + (x < 0 ? 'L' : 'R'))
+}
+
+// Four M8 bolts standing in the corner holes
+for (const [x, y] of [[-70, -40], [70, -40], [-70, 40], [70, 40]]) {
+  ;(await bolt({ size: 8, length: 22 })).at(x, y, 10).name('Bolt ' + x + ',' + y)
+}
+
+// A tall coil spring on the side platform
+;(await roundedBox({ x: 40, y: 40, z: 6, radius: 2 })).at(-110, 0, 13).color('#556677').name('Platform')
+;(await spring({ coilRadius: 10, wireRadius: 1.5, pitch: 5, turns: 8, segments: 24 })).at(-110, 0, 16).color('#c9c9c9').name('Coil spring')
+;(await cylinder({ radius: 8, height: 3, segments: 48 })).at(-110, 0, 59).color('#334455').name('Spring cap')
+
+// Bent hydraulic pipe snaking between the housing and the platform
+;(await pipe({ path: '-90,0,20 -60,0,20 -60,20,20 -30,20,20 -30,20,45', radius: 2.5, segments: 24 })).color('#4d6478').name('Hydraulic line')
+
+// Threaded rod driving the pulley up top
+;(await pulley({ diameter: 34, width: 14, grooveDepth: 5, bore: 6 })).at(100, 0, 18).rotate(90, 0, 0).color('#c9c9c9').name('Drive pulley')
+;(await rod({ size: 6, length: 40 })).at(100, 0, 18).rotate(90, 0, 0).color('#c9c9c9').name('Rod')
+
+// Domed inspection cap on the housing
+;(await arcSphere({ radius: 10, startZ: 0, endZ: 10, segments: 48 })).at(0, 0, 40).color('#a08050').name('Inspection cap')
+
+// Engraved model number
+const plate = (await cube({ x: 60, y: 12, z: 1.5 })).at(0, -50, 11.25).color('#dbdbdb')
+const stamp = (await text({ text: 'FLOWCAD MK-II', letterHeight: 5, thickness: 1 })).at(0, -50, 11.25)
+;(await subtract(plate, stamp)).name('Nameplate').color('#dbdbdb')
+
+fit()
+`
