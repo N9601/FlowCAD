@@ -123,7 +123,17 @@ function toSolid(m: Manifold): SolidData {
 
 function evaluate(wasm: Wasm, node: CsgNode): Manifold {
   let local: Manifold
-  if (node.op) {
+  if (node.op === 'fillet') {
+    if (!node.children?.length || node.radius === undefined) throw new Error('Fillet needs one child and a radius')
+    const child = evaluate(wasm, node.children[0])
+    const ball = wasm.Manifold.sphere(node.radius, 24)
+    // Erode then dilate rounds every convex edge and vertex by radius.
+    const eroded = child.minkowskiDifference(ball)
+    local = eroded.minkowskiSum(ball)
+    child.delete()
+    ball.delete()
+    eroded.delete()
+  } else if (node.op) {
     const children = (node.children ?? []).map((child) => evaluate(wasm, child))
     const combine = { union: wasm.Manifold.union, subtract: wasm.Manifold.difference, intersect: wasm.Manifold.intersection }
     local = combine[node.op](children)

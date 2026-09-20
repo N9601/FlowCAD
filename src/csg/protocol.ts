@@ -41,12 +41,15 @@ export interface PlacedSolid {
  * a fixed mesh (`solid`), or a boolean of its `children` (`op`). `matrix` places the node in its
  * parent's frame; primitives are centred on their bounding box before it is applied.
  */
+/** A tree node is a primitive (spec), a fixed mesh (solid), a boolean of children, or a fillet of one child. */
 export interface CsgNode {
   name: string
   matrix: number[]
   spec?: PrimitiveSpec
   solid?: SolidData
-  op?: BooleanOp
+  op?: BooleanOp | 'fillet'
+  /** Radius for fillet, in mm. */
+  radius?: number
   children?: CsgNode[]
 }
 

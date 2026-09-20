@@ -1,4 +1,4 @@
-import { combine } from './actions'
+import { combine, fillet } from './actions'
 import { csg } from './csg/client'
 import type { BooleanOp, SolidData } from './csg/protocol'
 import type { CadDocument } from './document'
@@ -156,6 +156,22 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       const targets = doc.selection.length > 0 ? doc.selection : doc.objects
       download(exporters[ext](targets.map((o) => ({ name: o.name, ...doc.placed(o) }))), `flowcad.${ext}`)
       status.textContent = `Exported ${targets.length} object(s) to flowcad.${ext}`
+    }),
+  )
+
+  const modify = group()
+  const filletField = modify.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Fillet r' }))
+  const filletRadius = filletField.appendChild(Object.assign(document.createElement('input'), { type: 'number', value: '2', step: '0.5', min: '0.1' }))
+  needsOne.push(
+    button(modify, 'Fillet', async () => {
+      const radius = filletRadius.valueAsNumber
+      if (!Number.isFinite(radius) || radius <= 0) throw new Error('Fillet radius must be greater than zero')
+      const started = performance.now()
+      status.textContent = `Filleting ${doc.selection[0].name}...`
+      const original = doc.selection[0].name
+      await fillet(doc, doc.selection[0], radius)
+      doc.commit()
+      status.textContent = `Filleted ${original} by ${radius} mm in ${(performance.now() - started).toFixed(0)} ms`
     }),
   )
 
