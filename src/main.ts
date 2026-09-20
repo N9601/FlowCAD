@@ -17,6 +17,7 @@ import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
 import { buildSectionView } from './section'
 import { buildHistoryPanel } from './history-panel'
+import { buildAlignmentGuides } from './guides'
 import { buildLayerPreview } from './layers'
 import { autosave, snapshots } from './storage'
 import { buildTheme } from './theme'
@@ -59,3 +60,4 @@ doc.addEventListener('saved-state', () => {
 })
 buildHistoryPanel($('#toolbar'), doc, $('#statusbar'))
 buildLayerPreview($('#toolbar'), doc, $('#statusbar'))
+buildAlignmentGuides(view, doc)
