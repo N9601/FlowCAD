@@ -77,7 +77,7 @@ export function decodeStl(buffer: ArrayBuffer): SolidData {
 }
 
 export function download(data: ArrayBuffer, filename: string) {
-  const url = URL.createObjectURL(new Blob([data], { type: 'model/stl' }))
+  const url = URL.createObjectURL(new Blob([data]))
   const a = Object.assign(document.createElement('a'), { href: url, download: filename })
   a.click()
   URL.revokeObjectURL(url)

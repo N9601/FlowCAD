@@ -1,6 +1,7 @@
 import { csg } from './csg/client'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument } from './document'
+import { encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
 const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
@@ -80,6 +81,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   button(gizmo, 'Move (W)', () => doc.setGizmoMode('translate'))
   button(gizmo, 'Rotate (E)', () => doc.setGizmoMode('rotate'))
   button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
+  button(gizmo, 'X-Ray (X)', () => doc.toggleXray())
 
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
@@ -95,6 +97,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     else if (key === 'w') doc.setGizmoMode('translate')
     else if (key === 'e') doc.setGizmoMode('rotate')
     else if (key === 'r') doc.setGizmoMode('scale')
+    else if (key === 'x') doc.toggleXray()
   })
 
   const file = group()
@@ -133,13 +136,20 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       status.textContent = `Error: ${err instanceof Error ? err.message : err}`
     }
   })
-  needsAny.push(
-    button(file, 'Export STL', () => {
-      const targets = doc.selection.length > 0 ? doc.selection : doc.objects
-      download(encodeBinaryStl(targets.map((o) => doc.placed(o))), 'flowcad.stl')
-      status.textContent = `Exported ${targets.length} object(s) to flowcad.stl`
-    }),
-  )
+  const exporters: { ext: string; encode: (parts: NamedPart[]) => ArrayBuffer }[] = [
+    { ext: 'stl', encode: encodeBinaryStl },
+    { ext: 'obj', encode: encodeObj },
+    { ext: '3mf', encode: encode3mf },
+  ]
+  for (const { ext, encode } of exporters) {
+    needsAny.push(
+      button(file, `Export ${ext.toUpperCase()}`, () => {
+        const targets = doc.selection.length > 0 ? doc.selection : doc.objects
+        download(encode(targets.map((o) => ({ name: o.name, ...doc.placed(o) }))), `flowcad.${ext}`)
+        status.textContent = `Exported ${targets.length} object(s) to flowcad.${ext}`
+      }),
+    )
+  }
 
   const refresh = () => {
     const n = doc.selection.length
