@@ -1,6 +1,7 @@
 import { csg } from './csg/client'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument } from './document'
+import { download, encodeBinaryStl } from './io/stl'
 
 const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
   { label: 'Cube', spec: { kind: 'cube', size: [20, 20, 20] } },
@@ -17,6 +18,7 @@ const BOOLEANS: { label: string; op: BooleanOp }[] = [
 export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDocument) {
   const needsTwo: HTMLButtonElement[] = []
   const needsOne: HTMLButtonElement[] = []
+  const needsAny: HTMLButtonElement[] = []
 
   const group = () => root.appendChild(Object.assign(document.createElement('div'), { className: 'group' }))
   const button = (parent: HTMLElement, label: string, action: () => Promise<void> | void) => {
@@ -57,10 +59,20 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   const edit = group()
   needsOne.push(button(edit, 'Delete', () => doc.remove([...doc.selection])))
 
+  const file = group()
+  needsAny.push(
+    button(file, 'Export STL', () => {
+      const targets = doc.selection.length > 0 ? doc.selection : doc.objects
+      download(encodeBinaryStl(targets.map((o) => doc.placed(o))), 'flowcad.stl')
+      status.textContent = `Exported ${targets.length} object(s) to flowcad.stl`
+    }),
+  )
+
   const refresh = () => {
     const n = doc.selection.length
     for (const b of needsTwo) b.disabled = n !== 2
     for (const b of needsOne) b.disabled = n === 0
+    for (const b of needsAny) b.disabled = doc.objects.length === 0
     status.textContent =
       n === 0
         ? 'Click an object to select. Shift-click a second one to combine them.'
