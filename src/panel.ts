@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { csg } from './csg/client'
+import { METRIC_SIZES } from './csg/iso'
 import type { PrimitiveSpec } from './csg/protocol'
 import type { CadDocument, SceneObject } from './document'
 
@@ -10,10 +11,20 @@ interface Field {
   step: number
   max?: number
   integer?: boolean
+  /** Renders a dropdown instead of a free number. */
+  options?: { value: number; label: string }[]
 }
 
 const mm = (key: string, label: string): Field => ({ key, label, min: 0.1, step: 1 })
 const SEGMENTS: Field = { key: 'segments', label: 'Segments', min: 3, max: 256, step: 1, integer: true }
+
+const METRIC: Field = {
+  key: 'size',
+  label: 'Size',
+  min: 0,
+  step: 1,
+  options: METRIC_SIZES.map((s) => ({ value: s.d, label: `M${s.d} x ${s.pitch}` })),
+}
 
 const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   cube: [mm('x', 'Width X'), mm('y', 'Depth Y'), mm('z', 'Height Z')],
@@ -22,6 +33,9 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   cone: [mm('radius', 'Radius'), mm('height', 'Height'), SEGMENTS],
   tube: [mm('outerRadius', 'Outer radius'), mm('innerRadius', 'Inner radius'), mm('height', 'Height'), SEGMENTS],
   torus: [mm('majorRadius', 'Major radius'), mm('minorRadius', 'Tube radius'), SEGMENTS],
+  bolt: [METRIC, mm('length', 'Shank length')],
+  nut: [METRIC, { key: 'clearance', label: 'Thread clearance', min: 0, max: 1, step: 0.05 }],
+  rod: [METRIC, mm('length', 'Length')],
   gear: [
     { key: 'module', label: 'Module', min: 0.2, step: 0.5 },
     { key: 'teeth', label: 'Teeth', min: 6, max: 200, step: 1, integer: true },
@@ -38,6 +52,9 @@ function checkSpec(spec: PrimitiveSpec) {
   if (spec.kind === 'torus' && spec.minorRadius >= spec.majorRadius) {
     throw new Error('Tube radius must be smaller than major radius')
   }
+  if ((spec.kind === 'bolt' || spec.kind === 'rod') && spec.length > 200) {
+    throw new Error('Length is limited to 200 mm')
+  }
   if (spec.kind === 'gear' && spec.bore >= spec.module * (spec.teeth - 2.5)) {
     throw new Error('Bore must be smaller than the root diameter')
   }
@@ -53,20 +70,24 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocument) {
   const list = root.appendChild(el('section'))
   const props = root.appendChild(el('section'))
-  let positionInputs: HTMLInputElement[] = []
+  let positionInputs: (HTMLInputElement | HTMLSelectElement)[] = []
 
   const numberRow = (parent: HTMLElement, label: string, value: number, field: Partial<Field>, onChange: (v: number) => void) => {
     const row = parent.appendChild(el('label', 'row'))
     row.appendChild(el('span', undefined, label))
-    const input = row.appendChild(el('input'))
-    input.type = 'number'
+    const input = row.appendChild(el(field.options ? 'select' : 'input'))
+    if (input instanceof HTMLSelectElement) {
+      for (const o of field.options!) input.add(new Option(o.label, String(o.value)))
+    } else {
+      input.type = 'number'
+      if (field.min !== undefined) input.min = String(field.min)
+      input.step = String(field.step ?? 1)
+    }
     input.value = String(+value.toFixed(3))
-    if (field.min !== undefined) input.min = String(field.min)
-    input.step = String(field.step ?? 1)
     input.addEventListener('change', async () => {
       try {
-        const v = input.valueAsNumber
-        if (!Number.isFinite(v)) throw new Error(`${label} must be a number`)
+        const v = Number(input.value)
+        if (input.value === '' || !Number.isFinite(v)) throw new Error(`${label} must be a number`)
         await onChange(v)
       } catch (err) {
         status.textContent = `Error: ${err instanceof Error ? err.message : err}`

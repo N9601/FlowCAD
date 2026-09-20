@@ -89,7 +89,8 @@ body {
   margin: 3px 0;
 }
 
-#panel input {
+#panel input,
+#panel select {
   width: 100%;
   font: inherit;
   color: var(--text);
@@ -99,7 +100,8 @@ body {
   padding: 3px 6px;
 }
 
-#panel input:focus {
+#panel input:focus,
+#panel select:focus {
   outline: none;
   border-color: var(--accent);
 }

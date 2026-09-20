@@ -11,6 +11,9 @@ export type PrimitiveSpec =
   | { kind: 'cone'; radius: number; height: number; segments: number }
   | { kind: 'tube'; outerRadius: number; innerRadius: number; height: number; segments: number }
   | { kind: 'torus'; majorRadius: number; minorRadius: number; segments: number }
+  | { kind: 'bolt'; size: number; length: number }
+  | { kind: 'nut'; size: number; clearance: number }
+  | { kind: 'rod'; size: number; length: number }
   | { kind: 'gear'; module: number; teeth: number; pressureAngle: number; thickness: number; bore: number }
 
 export type BooleanOp = 'union' | 'subtract' | 'intersect'

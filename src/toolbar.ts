@@ -10,6 +10,9 @@ const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
   { label: 'Cone', spec: { kind: 'cone', radius: 10, height: 20, segments: 64 } },
   { label: 'Tube', spec: { kind: 'tube', outerRadius: 10, innerRadius: 7, height: 20, segments: 64 } },
   { label: 'Torus', spec: { kind: 'torus', majorRadius: 14, minorRadius: 4, segments: 64 } },
+  { label: 'Bolt', spec: { kind: 'bolt', size: 8, length: 25 } },
+  { label: 'Nut', spec: { kind: 'nut', size: 8, clearance: 0.15 } },
+  { label: 'Rod', spec: { kind: 'rod', size: 8, length: 40 } },
   { label: 'Gear', spec: { kind: 'gear', module: 2, teeth: 20, pressureAngle: 20, thickness: 8, bore: 8 } },
 ]
 
@@ -78,7 +81,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
 
   window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement) return
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
     const key = e.key.toLowerCase()
     if (e.ctrlKey || e.metaKey) {
       if (key === 'z' && !e.shiftKey) doc.undo()
