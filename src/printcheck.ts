@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { MeshBVH } from 'three-mesh-bvh'
 import type { SceneObject } from './document'
+import { outwardIndices } from './io/winding'
 
 export interface PrintSettings {
   /** Steepest printable overhang, in degrees from vertical. */
@@ -40,7 +41,8 @@ export const plaGrams = (volumeMm3: number) => (volumeMm3 / 1000) * PLA_DENSITY
 
 export function analyse(obj: SceneObject, settings: PrintSettings): PrintReport {
   obj.mesh.updateMatrixWorld()
-  const { indices } = obj.solid
+  // Flags stay in the solid's own triangle order: the helper only swaps corners within a triangle.
+  const indices = outwardIndices({ solid: obj.solid, matrix: obj.mesh.matrixWorld.toArray() })
   const triangles = indices.length / 3
 
   // Everything is measured in world space so rotation and non-uniform scale are handled.

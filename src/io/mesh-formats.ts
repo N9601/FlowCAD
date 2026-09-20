@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { PlacedSolid, SolidData } from '../csg/protocol'
 import { weld } from './stl'
+import { outwardIndices } from './winding'
 import { zip } from './zip'
 
 export interface NamedPart extends PlacedSolid {
@@ -28,7 +29,7 @@ export function encodeObj(parts: readonly NamedPart[]): ArrayBuffer {
     lines.push(`o ${part.name.replace(/\s+/g, '_')}`)
     const vertices = worldVertices(part)
     for (const v of vertices) lines.push(`v ${v.join(' ')}`)
-    const idx = part.solid.indices
+    const idx = outwardIndices(part)
     for (let t = 0; t < idx.length; t += 3) {
       lines.push(`f ${idx[t] + base} ${idx[t + 1] + base} ${idx[t + 2] + base}`)
     }
@@ -70,7 +71,7 @@ const RELS =
 export function encode3mf(parts: readonly NamedPart[]): ArrayBuffer {
   const objects = parts.map((part, i) => {
     const vertices = worldVertices(part).map(([x, y, z]) => `<vertex x="${x}" y="${y}" z="${z}"/>`)
-    const idx = part.solid.indices
+    const idx = outwardIndices(part)
     const triangles: string[] = []
     for (let t = 0; t < idx.length; t += 3) {
       triangles.push(`<triangle v1="${idx[t]}" v2="${idx[t + 1]}" v3="${idx[t + 2]}"/>`)

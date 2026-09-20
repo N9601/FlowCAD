@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { PlacedSolid, SolidData } from '../csg/protocol'
 import { weld } from './stl'
+import { outwardIndices } from './winding'
 
 /** Binary little-endian PLY of all parts merged, in world space. */
 export function encodePly(parts: readonly PlacedSolid[]): ArrayBuffer {
@@ -41,7 +42,7 @@ export function encodePly(parts: readonly PlacedSolid[]): ArrayBuffer {
   }
   let base = 0
   for (const part of parts) {
-    const idx = part.solid.indices
+    const idx = outwardIndices(part)
     for (let t = 0; t < idx.length; t += 3) {
       view.setUint8(at, 3)
       view.setInt32(at + 1, idx[t] + base, true)

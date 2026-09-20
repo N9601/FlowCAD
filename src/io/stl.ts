@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { PlacedSolid, SolidData } from '../csg/protocol'
+import { outwardIndices } from './winding'
 
 const HEADER_BYTES = 80
 const TRIANGLE_BYTES = 50
@@ -17,11 +18,13 @@ export function encodeBinaryStl(parts: readonly PlacedSolid[]): ArrayBuffer {
   const edge = new THREE.Vector3()
   let offset = HEADER_BYTES + 4
 
-  for (const { solid, matrix: elements } of parts) {
-    matrix.fromArray(elements)
-    for (let t = 0; t < solid.indices.length; t += 3) {
+  for (const part of parts) {
+    const { solid } = part
+    const indices = outwardIndices(part)
+    matrix.fromArray(part.matrix)
+    for (let t = 0; t < indices.length; t += 3) {
       for (let k = 0; k < 3; k++) {
-        v[k].fromArray(solid.positions, solid.indices[t + k] * 3).applyMatrix4(matrix)
+        v[k].fromArray(solid.positions, indices[t + k] * 3).applyMatrix4(matrix)
       }
       normal.subVectors(v[1], v[0]).cross(edge.subVectors(v[2], v[0])).normalize()
       for (const vec of [normal, ...v]) {
