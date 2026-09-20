@@ -19,6 +19,24 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       return wasm.Manifold.cylinder(spec.height, spec.radius, spec.radius, spec.segments, true)
     case 'sphere':
       return wasm.Manifold.sphere(spec.radius, spec.segments)
+    case 'cone':
+      return wasm.Manifold.cylinder(spec.height, spec.radius, 0, spec.segments, true)
+    case 'tube': {
+      const outer = wasm.Manifold.cylinder(spec.height, spec.outerRadius, spec.outerRadius, spec.segments, true)
+      const bore = wasm.Manifold.cylinder(spec.height * 2, spec.innerRadius, spec.innerRadius, spec.segments, true)
+      const tube = outer.subtract(bore)
+      outer.delete()
+      bore.delete()
+      return tube
+    }
+    case 'torus': {
+      const circle = wasm.CrossSection.circle(spec.minorRadius, spec.segments / 2)
+      const profile = circle.translate([spec.majorRadius, 0])
+      const torus = wasm.Manifold.revolve(profile, spec.segments)
+      circle.delete()
+      profile.delete()
+      return torus
+    }
   }
 }
 

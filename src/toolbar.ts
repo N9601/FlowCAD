@@ -7,6 +7,9 @@ const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
   { label: 'Cube', spec: { kind: 'cube', size: [20, 20, 20] } },
   { label: 'Cylinder', spec: { kind: 'cylinder', radius: 10, height: 20, segments: 64 } },
   { label: 'Sphere', spec: { kind: 'sphere', radius: 12, segments: 64 } },
+  { label: 'Cone', spec: { kind: 'cone', radius: 10, height: 20, segments: 64 } },
+  { label: 'Tube', spec: { kind: 'tube', outerRadius: 10, innerRadius: 7, height: 20, segments: 64 } },
+  { label: 'Torus', spec: { kind: 'torus', majorRadius: 14, minorRadius: 4, segments: 64 } },
 ]
 
 const BOOLEANS: { label: string; op: BooleanOp }[] = [

@@ -8,6 +8,9 @@ export type PrimitiveSpec =
   | { kind: 'cube'; size: [number, number, number] }
   | { kind: 'cylinder'; radius: number; height: number; segments: number }
   | { kind: 'sphere'; radius: number; segments: number }
+  | { kind: 'cone'; radius: number; height: number; segments: number }
+  | { kind: 'tube'; outerRadius: number; innerRadius: number; height: number; segments: number }
+  | { kind: 'torus'; majorRadius: number; minorRadius: number; segments: number }
 
 export type BooleanOp = 'union' | 'subtract' | 'intersect'
 
