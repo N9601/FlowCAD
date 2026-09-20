@@ -1,0 +1,84 @@
+/// <reference lib="webworker" />
+import Module from 'manifold-3d'
+import type { Manifold, Mat4 } from 'manifold-3d'
+import wasmUrl from 'manifold-3d/manifold.wasm?url'
+import type { CsgRequest, CsgResponse, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
+
+const ready = Module({ locateFile: () => wasmUrl }).then((wasm) => {
+  wasm.setup()
+  return wasm
+})
+
+type Wasm = Awaited<typeof ready>
+
+function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
+  switch (spec.kind) {
+    case 'cube':
+      return wasm.Manifold.cube(spec.size, true)
+    case 'cylinder':
+      return wasm.Manifold.cylinder(spec.height, spec.radius, spec.radius, spec.segments, true)
+    case 'sphere':
+      return wasm.Manifold.sphere(spec.radius, spec.segments)
+  }
+}
+
+function place(wasm: Wasm, { solid, matrix }: PlacedSolid): Manifold {
+  const mesh = new wasm.Mesh({
+    numProp: 3,
+    vertProperties: solid.positions,
+    triVerts: solid.indices,
+  })
+  const local = new wasm.Manifold(mesh)
+  const world = local.transform(matrix as unknown as Mat4)
+  local.delete()
+  return world
+}
+
+function toSolid(m: Manifold): SolidData {
+  const mesh = m.getMesh()
+  if (mesh.numProp === 3) {
+    return { positions: mesh.vertProperties, indices: mesh.triVerts }
+  }
+  const count = mesh.vertProperties.length / mesh.numProp
+  const positions = new Float32Array(count * 3)
+  for (let i = 0; i < count; i++) {
+    positions.set(mesh.vertProperties.subarray(i * mesh.numProp, i * mesh.numProp + 3), i * 3)
+  }
+  return { positions, indices: mesh.triVerts }
+}
+
+function run(wasm: Wasm, req: CsgRequest): SolidData {
+  if (req.type === 'primitive') {
+    const m = primitive(wasm, req.spec)
+    try {
+      return toSolid(m)
+    } finally {
+      m.delete()
+    }
+  }
+
+  const a = place(wasm, req.a)
+  const b = place(wasm, req.b)
+  const result =
+    req.op === 'union' ? wasm.Manifold.union(a, b) : req.op === 'subtract' ? a.subtract(b) : a.intersect(b)
+  try {
+    if (result.isEmpty()) throw new Error(`${req.op} produced an empty solid`)
+    return toSolid(result)
+  } finally {
+    a.delete()
+    b.delete()
+    result.delete()
+  }
+}
+
+self.onmessage = async (e: MessageEvent<{ id: number; req: CsgRequest }>) => {
+  const { id, req } = e.data
+  let res: CsgResponse
+  try {
+    res = { id, ok: true, solid: run(await ready, req) }
+  } catch (err) {
+    res = { id, ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  const transfer = res.ok ? [res.solid.positions.buffer, res.solid.indices.buffer] : []
+  self.postMessage(res, transfer)
+}
