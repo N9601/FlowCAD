@@ -18,6 +18,7 @@ import { buildStats } from './stats'
 import { buildSectionView } from './section'
 import { buildHistoryPanel } from './history-panel'
 import { autosave, snapshots } from './storage'
+import { buildTheme } from './theme'
 import { buildToolbar } from './toolbar'
 import { buildToolsPanel } from './toolspanel'
 import { Viewport } from './viewport'
@@ -28,6 +29,7 @@ const view = new Viewport($('#scene'))
 const doc = new CadDocument(view)
 // Exposed for the browser console: `flowcad.doc.serialize()` and similar.
 ;(window as unknown as { flowcad: { doc: CadDocument; view: Viewport } }).flowcad = { doc, view }
+buildTheme($('#toolbar'), view)
 buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildConsole($('#toolbar'), $('#viewport'), doc, view)
 buildMeasure($('#toolbar'), view, doc, $('#statusbar'))

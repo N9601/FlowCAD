@@ -5,6 +5,17 @@
   --text: #d7dce3;
   --muted: #8a93a0;
   --accent: #4da3ff;
+  --shadow: rgb(0 0 0 / 0.4);
+}
+
+:root.theme-light {
+  --bg: #f1f2f4;
+  --panel: #ffffff;
+  --border: #d8dce2;
+  --text: #1b1e23;
+  --muted: #5e6773;
+  --accent: #2c73d2;
+  --shadow: rgb(0 0 0 / 0.15);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 13px;
   color: var(--text);
