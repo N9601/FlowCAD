@@ -3,6 +3,7 @@ import Module from 'manifold-3d'
 import type { Manifold, Mat4 } from 'manifold-3d'
 import wasmUrl from 'manifold-3d/manifold.wasm?url'
 import { gearProfile } from './gear'
+import { capsule, dome, polygonSolid, pulley, roundedBox, wedge } from './shapes'
 import { bolt, nut, rod } from './thread'
 import type { CsgNode, CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
 
@@ -39,6 +40,20 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       profile.delete()
       return torus
     }
+    case 'prism':
+      return polygonSolid(wasm, spec.sides, spec.radius, spec.radius, spec.height)
+    case 'pyramid':
+      return polygonSolid(wasm, spec.sides, spec.radius, 0, spec.height)
+    case 'wedge':
+      return wedge(wasm, spec.x, spec.y, spec.z)
+    case 'roundedBox':
+      return roundedBox(wasm, [spec.x, spec.y, spec.z], spec.radius, spec.segments)
+    case 'dome':
+      return dome(wasm, spec.radius, spec.segments)
+    case 'capsule':
+      return capsule(wasm, spec.radius, spec.length, spec.segments)
+    case 'pulley':
+      return pulley(wasm, spec.diameter, spec.width, spec.grooveDepth, spec.bore)
     case 'bolt':
       return bolt(wasm, spec.size, spec.length)
     case 'nut':

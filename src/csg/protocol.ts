@@ -11,6 +11,13 @@ export type PrimitiveSpec =
   | { kind: 'cone'; radius: number; height: number; segments: number }
   | { kind: 'tube'; outerRadius: number; innerRadius: number; height: number; segments: number }
   | { kind: 'torus'; majorRadius: number; minorRadius: number; segments: number }
+  | { kind: 'prism'; sides: number; radius: number; height: number }
+  | { kind: 'pyramid'; sides: number; radius: number; height: number }
+  | { kind: 'wedge'; x: number; y: number; z: number }
+  | { kind: 'roundedBox'; x: number; y: number; z: number; radius: number; segments: number }
+  | { kind: 'dome'; radius: number; segments: number }
+  | { kind: 'capsule'; radius: number; length: number; segments: number }
+  | { kind: 'pulley'; diameter: number; width: number; grooveDepth: number; bore: number }
   | { kind: 'bolt'; size: number; length: number }
   | { kind: 'nut'; size: number; clearance: number }
   | { kind: 'rod'; size: number; length: number }

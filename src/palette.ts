@@ -20,11 +20,23 @@ const CATEGORIES: { title: string; shapes: Shape[] }[] = [
     ],
   },
   {
+    title: 'More solids',
+    shapes: [
+      { label: 'Prism', spec: { kind: 'prism', sides: 6, radius: 10, height: 20 } },
+      { label: 'Pyramid', spec: { kind: 'pyramid', sides: 4, radius: 12, height: 20 } },
+      { label: 'Wedge', spec: { kind: 'wedge', x: 30, y: 20, z: 15 } },
+      { label: 'Round box', spec: { kind: 'roundedBox', x: 30, y: 20, z: 12, radius: 3, segments: 32 } },
+      { label: 'Dome', spec: { kind: 'dome', radius: 12, segments: 64 } },
+      { label: 'Capsule', spec: { kind: 'capsule', radius: 6, length: 30, segments: 48 } },
+    ],
+  },
+  {
     title: 'Mechanical',
     shapes: [
       { label: 'Bolt', spec: { kind: 'bolt', size: 8, length: 25 } },
       { label: 'Nut', spec: { kind: 'nut', size: 8, clearance: 0.15 } },
       { label: 'Rod', spec: { kind: 'rod', size: 8, length: 40 } },
+      { label: 'Pulley', spec: { kind: 'pulley', diameter: 40, width: 12, grooveDepth: 6, bore: 8 } },
       { label: 'Gear', spec: { kind: 'gear', module: 2, teeth: 20, pressureAngle: 20, thickness: 8, bore: 8 } },
     ],
   },

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { csg } from './csg/client'
 import { METRIC_SIZES } from './csg/iso'
 import type { CsgNode, PrimitiveSpec } from './csg/protocol'
+import { grooveOpening } from './csg/shapes'
 import type { CadDocument, NewPart, SceneObject } from './document'
 
 interface Field {
@@ -18,6 +19,8 @@ interface Field {
 const mm = (key: string, label: string): Field => ({ key, label, min: 0.1, step: 1 })
 const SEGMENTS: Field = { key: 'segments', label: 'Segments', min: 3, max: 256, step: 1, integer: true }
 
+const SIDES: Field = { key: 'sides', label: 'Sides', min: 3, max: 64, step: 1, integer: true }
+
 const METRIC: Field = {
   key: 'size',
   label: 'Size',
@@ -33,6 +36,13 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   cone: [mm('radius', 'Radius'), mm('height', 'Height'), SEGMENTS],
   tube: [mm('outerRadius', 'Outer radius'), mm('innerRadius', 'Inner radius'), mm('height', 'Height'), SEGMENTS],
   torus: [mm('majorRadius', 'Major radius'), mm('minorRadius', 'Tube radius'), SEGMENTS],
+  prism: [SIDES, mm('radius', 'Corner radius'), mm('height', 'Height')],
+  pyramid: [SIDES, mm('radius', 'Corner radius'), mm('height', 'Height')],
+  wedge: [mm('x', 'Length X'), mm('y', 'Depth Y'), mm('z', 'Height Z')],
+  roundedBox: [mm('x', 'Width X'), mm('y', 'Depth Y'), mm('z', 'Height Z'), mm('radius', 'Corner radius'), SEGMENTS],
+  dome: [mm('radius', 'Radius'), SEGMENTS],
+  capsule: [mm('radius', 'Radius'), mm('length', 'Overall length'), SEGMENTS],
+  pulley: [mm('diameter', 'Outer diameter'), mm('width', 'Width'), mm('grooveDepth', 'Groove depth'), { key: 'bore', label: 'Bore diameter', min: 0, step: 1 }],
   bolt: [METRIC, mm('length', 'Shank length')],
   nut: [METRIC, { key: 'clearance', label: 'Thread clearance', min: 0, max: 1, step: 0.05 }],
   rod: [METRIC, mm('length', 'Length')],
@@ -51,6 +61,16 @@ function checkSpec(spec: PrimitiveSpec) {
   }
   if (spec.kind === 'torus' && spec.minorRadius >= spec.majorRadius) {
     throw new Error('Tube radius must be smaller than major radius')
+  }
+  if (spec.kind === 'roundedBox' && spec.radius * 2 >= Math.min(spec.x, spec.y, spec.z)) {
+    throw new Error('Corner radius must be less than half the smallest side')
+  }
+  if (spec.kind === 'capsule' && spec.length <= spec.radius * 2) {
+    throw new Error('Overall length must be more than twice the radius')
+  }
+  if (spec.kind === 'pulley') {
+    if (grooveOpening(spec.width, spec.grooveDepth) >= spec.width) throw new Error('Groove is too deep for this width')
+    if (spec.bore / 2 >= spec.diameter / 2 - spec.grooveDepth) throw new Error('Bore must be smaller than the groove diameter')
   }
   if ((spec.kind === 'bolt' || spec.kind === 'rod') && spec.length > 200) {
     throw new Error('Length is limited to 200 mm')
