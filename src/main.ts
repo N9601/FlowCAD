@@ -17,6 +17,7 @@ import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
 import { buildSectionView } from './section'
 import { buildHistoryPanel } from './history-panel'
+import { buildLayerPreview } from './layers'
 import { autosave, snapshots } from './storage'
 import { buildTheme } from './theme'
 import { buildToolbar } from './toolbar'
@@ -57,3 +58,4 @@ doc.addEventListener('saved-state', () => {
   snapshots.record(data).catch((err) => console.warn('Snapshot failed', err))
 })
 buildHistoryPanel($('#toolbar'), doc, $('#statusbar'))
+buildLayerPreview($('#toolbar'), doc, $('#statusbar'))
