@@ -81,6 +81,19 @@ body {
   background: #40352a;
 }
 
+#panel .item.node {
+  padding: 2px 8px;
+}
+
+#panel .item.node.op {
+  color: var(--muted);
+}
+
+#panel button {
+  width: 100%;
+  margin-top: 10px;
+}
+
 #panel .row {
   display: grid;
   grid-template-columns: 1fr 110px;

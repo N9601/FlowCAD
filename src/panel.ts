@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import { csg } from './csg/client'
 import { METRIC_SIZES } from './csg/iso'
-import type { PrimitiveSpec } from './csg/protocol'
-import type { CadDocument, SceneObject } from './document'
+import type { CsgNode, PrimitiveSpec } from './csg/protocol'
+import type { CadDocument, NewPart, SceneObject } from './document'
 
 interface Field {
   key: string
@@ -78,6 +78,19 @@ function measure(obj: SceneObject) {
   return { volume: Math.abs(volume), area }
 }
 
+const IDENTITY = new THREE.Matrix4().toArray()
+
+/** Copy of `root` with the node at `path` (child indices) swapped for `next`. */
+function replaceNode(root: CsgNode, path: readonly number[], next: CsgNode): CsgNode {
+  if (path.length === 0) return next
+  const [head, ...rest] = path
+  return { ...root, children: root.children!.map((child, i) => (i === head ? replaceNode(child, rest, next) : child)) }
+}
+
+function nodeAt(root: CsgNode, path: readonly number[]): CsgNode | undefined {
+  return path.reduce<CsgNode | undefined>((node, i) => node?.children?.[i], root)
+}
+
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
   const node = document.createElement(tag)
   if (className) node.className = className
@@ -89,6 +102,8 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
   const list = root.appendChild(el('section'))
   const props = root.appendChild(el('section'))
   let syncTransform = () => {}
+  /** Which history node is open for editing, remembered per object. */
+  let editing: { objectId: number; path: number[] } | undefined
 
   const numberRow = (parent: HTMLElement, label: string, value: number, field: Partial<Field>, onChange: (v: number) => void) => {
     const row = parent.appendChild(el('label', 'row'))
@@ -173,7 +188,11 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
       })
     }
 
-    if (obj.spec) renderSpec(obj, obj.spec)
+    if (obj.spec) {
+      const spec = obj.spec
+      specRows('Dimensions (mm)', spec, async (next) => doc.replaceSolid(obj, await csg.primitive(next), next))
+    }
+    if (obj.tree) renderHistory(obj, obj.tree)
 
     const size = new THREE.Box3().setFromObject(obj.mesh).getSize(new THREE.Vector3())
     props.appendChild(el('h3', undefined, 'Info'))
@@ -183,17 +202,80 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     props.appendChild(el('p', 'hint', `${obj.solid.indices.length / 3} triangles, ${obj.solid.positions.length / 3} vertices`))
   }
 
-  const renderSpec = (obj: SceneObject, spec: PrimitiveSpec) => {
-    props.appendChild(el('h3', undefined, 'Dimensions (mm)'))
+  const specRows = (title: string, spec: PrimitiveSpec, apply: (next: PrimitiveSpec) => Promise<void>) => {
+    props.appendChild(el('h3', undefined, title))
     const values = spec as unknown as Record<string, number>
     for (const field of FIELDS[spec.kind]) {
       numberRow(props, field.label, values[field.key], field, async (v) => {
         const value = Math.min(field.max ?? Infinity, Math.max(field.min, field.integer ? Math.round(v) : v))
         const next = { ...spec, [field.key]: value } as PrimitiveSpec
         checkSpec(next)
-        doc.replaceSolid(obj, await csg.primitive(next), next)
+        await apply(next)
       })
     }
+  }
+
+  const renderHistory = (obj: SceneObject, tree: CsgNode) => {
+    if (editing?.objectId !== obj.id || !nodeAt(tree, editing.path)) editing = undefined
+    props.appendChild(el('h3', undefined, 'History'))
+
+    const renderNode = (node: CsgNode, path: number[]) => {
+      const open = editing !== undefined && editing.path.join() === path.join()
+      const label = node.op ? `${node.op[0].toUpperCase()}${node.op.slice(1)}` : node.name
+      const item = props.appendChild(el('div', `item node${open ? ' primary' : ''}${node.op ? ' op' : ''}`, label))
+      item.style.marginLeft = `${path.length * 12}px`
+      if (path.length > 0) {
+        item.addEventListener('click', () => {
+          editing = open ? undefined : { objectId: obj.id, path }
+          renderProps()
+        })
+      }
+      node.children?.forEach((child, i) => renderNode(child, [...path, i]))
+    }
+    renderNode(tree, [])
+
+    const rebuild = async (path: number[], next: CsgNode) => {
+      const updated = replaceNode(tree, path, next)
+      doc.setTree(obj, await csg.evaluate(updated), updated)
+    }
+
+    const node = editing && nodeAt(tree, editing.path)
+    if (editing && node) {
+      const path = editing.path
+      props.appendChild(el('h3', undefined, `${node.name}: offset (mm)`))
+      ;(['X', 'Y', 'Z'] as const).forEach((axis, i) => {
+        numberRow(props, axis, node.matrix[12 + i], { step: 1 }, (v) => {
+          const matrix = [...node.matrix]
+          matrix[12 + i] = v
+          return rebuild(path, { ...node, matrix })
+        })
+      })
+      if (node.spec) specRows(`${node.name}: dimensions (mm)`, node.spec, (spec) => rebuild(path, { ...node, spec }))
+    } else {
+      props.appendChild(el('p', 'hint', 'Click a part to edit it after the fact.'))
+    }
+
+    const ungroup = props.appendChild(el('button', undefined, 'Ungroup into parts'))
+    ungroup.addEventListener('click', async () => {
+      try {
+        obj.mesh.updateMatrixWorld()
+        const frame = obj.mesh.matrixWorld.clone().multiply(new THREE.Matrix4().fromArray(tree.matrix))
+        const parts: NewPart[] = []
+        for (const child of tree.children ?? []) {
+          const local = { ...child, matrix: IDENTITY }
+          parts.push({
+            name: child.name,
+            solid: child.solid ?? (await csg.evaluate(local)),
+            spec: child.spec,
+            tree: child.op ? local : undefined,
+            matrix: frame.clone().multiply(new THREE.Matrix4().fromArray(child.matrix)),
+          })
+        }
+        doc.replaceWith(obj, parts)
+      } catch (err) {
+        status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+      }
+    })
   }
 
   doc.addEventListener('change', () => {
