@@ -9,12 +9,15 @@ Browser-based 3D CAD modeler. Everything runs client-side: no server, no account
 - Mechanical generators: involute spur gear, ISO metric hex bolt, hex nut and threaded rod (M2 to M24,
   true helical 60 degree thread, adjustable nut clearance for printing)
 - Primitives stay parametric: edit dimensions in the side panel after creation
-- Boolean union / subtract / intersect, run in a Web Worker so the UI never blocks
-- Click to select, shift-click to add a second object (first = target, second = tool)
-- Move / rotate / scale gizmo with snapping (1 mm, 15 degrees, 0.1), plus numeric position entry
+- Boolean union / subtract / intersect on any number of objects (first selected = target, the rest = tools),
+  run in a Web Worker so the UI never blocks
+- Click to select, shift-click to add, shift-drag to box-select
+- Move / rotate / scale gizmo with snapping (1 mm, 15 degrees, 0.1), plus numeric position, rotation and scale entry
+- Live size, volume, surface area and triangle count for the selected object
 - Undo / redo, 200 levels; scene autosaves to IndexedDB and is restored on reload
-- STL import (binary or ASCII, file picker or drag-and-drop), welded and checked watertight so imports work in booleans
+- STL (binary or ASCII) and OBJ import (file picker or drag-and-drop), welded and checked watertight so imports work in booleans
 - Export to STL, OBJ and 3MF of the selection, or of everything when nothing is selected
+- Section cut at any Z height, exported as 1:1 mm SVG or DXF for laser cutters and CNC
 
 ## Shortcuts
 
@@ -46,7 +49,7 @@ npm run build
 | `src/document.ts` | Scene objects, selection, gizmo, undo history |
 | `src/csg/` | Manifold WASM worker, typed request protocol, promise client |
 | `src/csg/gear.ts`, `src/csg/thread.ts`, `src/csg/iso.ts` | Gear profile, thread and fastener generators, ISO size table |
-| `src/io/` | STL import/export, OBJ and 3MF export, ZIP writer |
+| `src/io/` | STL and OBJ import/export, 3MF export, SVG/DXF sections, ZIP writer |
 | `src/panel.ts` | Object list and properties editor |
 | `src/storage.ts` | IndexedDB autosave |
 | `src/toolbar.ts` | Toolbar and keyboard bindings |
