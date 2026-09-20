@@ -2,6 +2,7 @@ import { csg } from './csg/client'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument } from './document'
 import { encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
+import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
 const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
@@ -147,6 +148,22 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
         const targets = doc.selection.length > 0 ? doc.selection : doc.objects
         download(encode(targets.map((o) => ({ name: o.name, ...doc.placed(o) }))), `flowcad.${ext}`)
         status.textContent = `Exported ${targets.length} object(s) to flowcad.${ext}`
+      }),
+    )
+  }
+
+  const cut = group()
+  const cutLabel = cut.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Section Z' }))
+  const cutZ = cutLabel.appendChild(Object.assign(document.createElement('input'), { type: 'number', value: '5', step: '1' }))
+  for (const { ext, encode } of [{ ext: 'svg', encode: encodeSvg }, { ext: 'dxf', encode: encodeDxf }]) {
+    needsAny.push(
+      button(cut, `Export ${ext.toUpperCase()}`, async () => {
+        const z = cutZ.valueAsNumber
+        if (!Number.isFinite(z)) throw new Error('Section Z must be a number')
+        const targets = doc.selection.length > 0 ? doc.selection : doc.objects
+        const outlines = await csg.section(targets.map((o) => doc.placed(o)), z)
+        download(encode(outlines), `flowcad-section.${ext}`)
+        status.textContent = `Exported ${outlines.length} outline(s) at Z = ${z} mm to flowcad-section.${ext}`
       }),
     )
   }

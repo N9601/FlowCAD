@@ -24,12 +24,17 @@ export interface PlacedSolid {
   matrix: number[]
 }
 
+/** Closed 2D loop of xy points. Outer loops are counter-clockwise, holes clockwise. */
+export type Outline = [number, number][]
+
 export type CsgRequest =
   | { type: 'primitive'; spec: PrimitiveSpec }
   /** Subtract removes every later part from the first one. */
   | { type: 'boolean'; op: BooleanOp; parts: PlacedSolid[] }
   | { type: 'validate'; solid: SolidData }
+  /** Cross-section of the union of all parts at world height z. */
+  | { type: 'section'; parts: PlacedSolid[]; z: number }
 
 export type CsgResponse =
-  | { id: number; ok: true; solid: SolidData }
+  | { id: number; ok: true; result: SolidData | Outline[] }
   | { id: number; ok: false; error: string }

@@ -158,6 +158,23 @@ button:disabled {
   height: 100%;
 }
 
+#toolbar .field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+#toolbar .field input {
+  width: 60px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
 .marquee {
   position: absolute;
   border: 1px solid var(--accent);

@@ -4,7 +4,7 @@ import type { Manifold, Mat4 } from 'manifold-3d'
 import wasmUrl from 'manifold-3d/manifold.wasm?url'
 import { gearProfile } from './gear'
 import { bolt, nut, rod } from './thread'
-import type { CsgRequest, CsgResponse, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
+import type { CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
 
 const ready = Module({ locateFile: () => wasmUrl }).then((wasm) => {
   wasm.setup()
@@ -83,7 +83,24 @@ function toSolid(m: Manifold): SolidData {
   return { positions, indices: mesh.triVerts }
 }
 
-function run(wasm: Wasm, req: CsgRequest): SolidData {
+function section(wasm: Wasm, placed: PlacedSolid[], z: number): Outline[] {
+  const parts = placed.map((p) => place(wasm, p))
+  const merged = wasm.Manifold.union(parts)
+  const slice = merged.slice(z)
+  try {
+    const outlines = slice.toPolygons().map((loop) => loop.map(([x, y]): [number, number] => [x, y]))
+    if (outlines.length === 0) throw new Error(`Nothing is cut at Z = ${z} mm`)
+    return outlines
+  } finally {
+    for (const p of parts) p.delete()
+    merged.delete()
+    slice.delete()
+  }
+}
+
+function run(wasm: Wasm, req: CsgRequest): SolidData | Outline[] {
+  if (req.type === 'section') return section(wasm, req.parts, req.z)
+
   if (req.type === 'primitive') {
     const m = primitive(wasm, req.spec)
     try {
@@ -124,10 +141,10 @@ self.onmessage = async (e: MessageEvent<{ id: number; req: CsgRequest }>) => {
   const { id, req } = e.data
   let res: CsgResponse
   try {
-    res = { id, ok: true, solid: run(await ready, req) }
+    res = { id, ok: true, result: run(await ready, req) }
   } catch (err) {
     res = { id, ok: false, error: err instanceof Error ? err.message : String(err) }
   }
-  const transfer = res.ok ? [res.solid.positions.buffer, res.solid.indices.buffer] : []
+  const transfer = res.ok && !Array.isArray(res.result) ? [res.result.positions.buffer, res.result.indices.buffer] : []
   self.postMessage(res, transfer)
 }
