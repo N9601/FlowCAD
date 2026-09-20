@@ -18,12 +18,15 @@ Browser-based 3D CAD modeler. Everything runs client-side: no server, no account
   position or engraved text after the cut, or ungroup the result back into its original objects
 - Scripting console: build models from JavaScript with every shape, transforms and booleans available as
   async functions; one run is one undo step
+- Print check: flags overhangs that need support, walls thinner than the nozzle allows, poor bed contact,
+  floating parts and parts too big for the build volume, highlights the problem faces on the model, and
+  estimates PLA weight. Updates live as parts are moved or edited
 - Click to select, shift-click to add, shift-drag to box-select
 - Move / rotate / scale gizmo with snapping (1 mm, 15 degrees, 0.1), plus numeric position, rotation and scale entry
 - Live size, volume, surface area and triangle count for the selected object
 - Undo / redo, 200 levels; scene autosaves to IndexedDB and is restored on reload
-- STL (binary or ASCII) and OBJ import (file picker or drag-and-drop), welded and checked watertight so imports work in booleans
-- Export to STL, OBJ and 3MF of the selection, or of everything when nothing is selected
+- STL (binary or ASCII), OBJ, GLB and PLY import (file picker or drag-and-drop), welded and checked watertight so imports work in booleans
+- Export to STL, OBJ, 3MF, GLB and PLY of the selection, or of everything when nothing is selected
 - Section cut at any Z height, exported as 1:1 mm SVG or DXF for laser cutters and CNC
 
 ## Shortcuts
@@ -79,7 +82,8 @@ npm run build
 | `src/catalog.ts`, `src/actions.ts` | Shape catalogue with defaults and validation; shared add/combine actions |
 | `src/palette.ts` | Categorized shape palette |
 | `src/script.ts`, `src/console.ts` | Script API and the console drawer |
-| `src/io/` | STL and OBJ import/export, 3MF export, SVG/DXF sections, ZIP writer |
+| `src/io/` | STL, OBJ, GLB and PLY import/export, 3MF export, SVG/DXF sections, ZIP writer |
+| `src/printcheck.ts`, `src/printpanel.ts` | Printability analysis and its report/overlay |
 | `src/panel.ts` | Object list and properties editor |
 | `src/storage.ts` | IndexedDB autosave |
 | `src/toolbar.ts` | Toolbar and keyboard bindings |
@@ -93,5 +97,6 @@ the worker re-evaluates whenever a part is edited.
 
 - [three.js](https://threejs.org/) (MIT)
 - [Manifold](https://github.com/elalish/manifold) (Apache 2.0)
+- [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) (MIT)
 - [opentype.js](https://github.com/opentypejs/opentype.js) (MIT)
 - [Roboto](https://fontsource.org/fonts/roboto) (OFL 1.1)
