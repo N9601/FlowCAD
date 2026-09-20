@@ -60,6 +60,24 @@ function checkSpec(spec: PrimitiveSpec) {
   }
 }
 
+/** Volume (mm^3) and surface area (mm^2) of an object in world space. */
+function measure(obj: SceneObject) {
+  const { positions, indices } = obj.solid
+  obj.mesh.updateMatrixWorld()
+  const [a, b, c] = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]
+  const cross = new THREE.Vector3()
+  let volume = 0
+  let area = 0
+  for (let t = 0; t < indices.length; t += 3) {
+    a.fromArray(positions, indices[t] * 3).applyMatrix4(obj.mesh.matrixWorld)
+    b.fromArray(positions, indices[t + 1] * 3).applyMatrix4(obj.mesh.matrixWorld)
+    c.fromArray(positions, indices[t + 2] * 3).applyMatrix4(obj.mesh.matrixWorld)
+    volume += a.dot(cross.crossVectors(b, c)) / 6
+    area += cross.subVectors(b, a).cross(c.sub(a)).length() / 2
+  }
+  return { volume: Math.abs(volume), area }
+}
+
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
   const node = document.createElement(tag)
   if (className) node.className = className
@@ -160,6 +178,8 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     const size = new THREE.Box3().setFromObject(obj.mesh).getSize(new THREE.Vector3())
     props.appendChild(el('h3', undefined, 'Info'))
     props.appendChild(el('p', 'hint', `Size ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} mm`))
+    const { volume, area } = measure(obj)
+    props.appendChild(el('p', 'hint', `Volume ${(volume / 1000).toFixed(2)} cm3, surface ${(area / 100).toFixed(2)} cm2`))
     props.appendChild(el('p', 'hint', `${obj.solid.indices.length / 3} triangles, ${obj.solid.positions.length / 3} vertices`))
   }
 
