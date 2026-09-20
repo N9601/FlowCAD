@@ -6,6 +6,7 @@ import { parse, type Font } from 'opentype.js'
 import fontUrl from '@fontsource/roboto/files/roboto-latin-700-normal.woff?url'
 import { gearProfile } from './gear'
 import { parseProfile } from './profile'
+import { parsePath, pipe, spring } from './pipe'
 import { capsule, dome, polygonSolid, pulley, roundedBox, wedge } from './shapes'
 import { textContours } from './text'
 import { bolt, nut, rod } from './thread'
@@ -69,6 +70,10 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       const steps = Math.min(1800, Math.ceil(Math.abs(spec.twist) / 2))
       return wasm.Manifold.extrude(parseProfile(spec.profile, false), spec.height, steps, spec.twist, [1, 1], true)
     }
+    case 'pipe':
+      return pipe(wasm, parsePath(spec.path), spec.radius, spec.segments)
+    case 'spring':
+      return spring(wasm, spec.coilRadius, spec.wireRadius, spec.pitch, spec.turns, spec.segments)
     case 'text': {
       const contours = textContours(font, spec.text, spec.letterHeight)
       if (contours.length === 0) throw new Error('Text has no printable characters in this font')
@@ -123,15 +128,15 @@ function toSolid(m: Manifold): SolidData {
 
 function evaluate(wasm: Wasm, node: CsgNode): Manifold {
   let local: Manifold
-  if (node.op === 'fillet') {
-    if (!node.children?.length || node.radius === undefined) throw new Error('Fillet needs one child and a radius')
+  if (node.op === 'fillet' || node.op === 'chamfer') {
+    if (!node.children?.length || node.radius === undefined) throw new Error(`${node.op} needs one child and a radius`)
     const child = evaluate(wasm, node.children[0])
-    const ball = wasm.Manifold.sphere(node.radius, 24)
-    // Erode then dilate rounds every convex edge and vertex by radius.
-    const eroded = child.minkowskiDifference(ball)
-    local = eroded.minkowskiSum(ball)
+    // A high-segment sphere rounds smoothly; a 4-segment sphere (octahedron) cuts flat 45-degree chamfers.
+    const operator = wasm.Manifold.sphere(node.radius, node.op === 'chamfer' ? 4 : 24)
+    const eroded = child.minkowskiDifference(operator)
+    local = eroded.minkowskiSum(operator)
     child.delete()
-    ball.delete()
+    operator.delete()
     eroded.delete()
   } else if (node.op) {
     const children = (node.children ?? []).map((child) => evaluate(wasm, child))

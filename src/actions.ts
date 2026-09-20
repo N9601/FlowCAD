@@ -13,16 +13,20 @@ export async function addShape(doc: CadDocument, label: string, spec: PrimitiveS
   return doc.add(label, await csg.primitive(spec), spec)
 }
 
-/** Rounds every convex edge of the object by `radius` using Manifold's Minkowski erode-then-dilate. */
-export async function fillet(doc: CadDocument, obj: SceneObject, radius: number): Promise<SceneObject> {
-  if (radius <= 0) throw new Error('Fillet radius must be greater than zero')
-  const tree: CsgNode = { name: `Fillet ${radius}mm`, op: 'fillet', radius, children: [doc.nodeOf(obj)], matrix: IDENTITY }
+/** Rounds every convex edge by `radius` mm (fillet) or cuts it back at 45 degrees (chamfer). */
+export async function roundEdges(doc: CadDocument, obj: SceneObject, op: 'fillet' | 'chamfer', radius: number): Promise<SceneObject> {
+  if (radius <= 0) throw new Error(`${op} radius must be greater than zero`)
+  const label = `${op[0].toUpperCase()}${op.slice(1)}`
+  const tree: CsgNode = { name: `${label} ${radius}mm`, op, radius, children: [doc.nodeOf(obj)], matrix: IDENTITY }
   const solid = await csg.evaluate(tree)
   doc.remove([obj])
-  const result = doc.add('Fillet', solid)
+  const result = doc.add(label, solid)
   result.tree = { ...tree, matrix: new Matrix4().setPosition(result.mesh.position.clone().negate()).toArray() }
   return result
 }
+
+export const fillet = (doc: CadDocument, obj: SceneObject, radius: number) => roundEdges(doc, obj, 'fillet', radius)
+export const chamfer = (doc: CadDocument, obj: SceneObject, radius: number) => roundEdges(doc, obj, 'chamfer', radius)
 
 /** Replaces the inputs with their boolean result. Subtract removes every later input from the first. */
 export async function combine(doc: CadDocument, op: BooleanOp, inputs: readonly SceneObject[]): Promise<SceneObject> {

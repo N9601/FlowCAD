@@ -1,4 +1,4 @@
-import { combine, fillet } from './actions'
+import { chamfer, combine, fillet } from './actions'
 import { csg } from './csg/client'
 import type { BooleanOp, SolidData } from './csg/protocol'
 import type { CadDocument } from './document'
@@ -162,18 +162,18 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   const modify = group()
   const filletField = modify.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Fillet r' }))
   const filletRadius = filletField.appendChild(Object.assign(document.createElement('input'), { type: 'number', value: '2', step: '0.5', min: '0.1' }))
-  needsOne.push(
-    button(modify, 'Fillet', async () => {
-      const radius = filletRadius.valueAsNumber
-      if (!Number.isFinite(radius) || radius <= 0) throw new Error('Fillet radius must be greater than zero')
-      const started = performance.now()
-      status.textContent = `Filleting ${doc.selection[0].name}...`
-      const original = doc.selection[0].name
-      await fillet(doc, doc.selection[0], radius)
-      doc.commit()
-      status.textContent = `Filleted ${original} by ${radius} mm in ${(performance.now() - started).toFixed(0)} ms`
-    }),
-  )
+  const runRounding = (op: 'fillet' | 'chamfer', label: string) => async () => {
+    const radius = filletRadius.valueAsNumber
+    if (!Number.isFinite(radius) || radius <= 0) throw new Error(`${label} radius must be greater than zero`)
+    const started = performance.now()
+    const original = doc.selection[0].name
+    status.textContent = `${label} on ${original}...`
+    await (op === 'fillet' ? fillet : chamfer)(doc, doc.selection[0], radius)
+    doc.commit()
+    status.textContent = `${label} on ${original} by ${radius} mm in ${(performance.now() - started).toFixed(0)} ms`
+  }
+  needsOne.push(button(modify, 'Fillet', runRounding('fillet', 'Fillet')))
+  needsOne.push(button(modify, 'Chamfer', runRounding('chamfer', 'Chamfer')))
 
   const cut = group()
   const cutLabel = cut.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Section Z' }))

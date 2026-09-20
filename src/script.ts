@@ -1,5 +1,5 @@
 import { MathUtils } from 'three'
-import { addShape, combine, fillet } from './actions'
+import { addShape, chamfer, combine, fillet } from './actions'
 import { dropToBed, mirror, type Axis } from './arrange'
 import { CATEGORIES } from './catalog'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
@@ -69,6 +69,11 @@ class Part {
     return new Part(await fillet(this.doc, this.object, radius), this.doc)
   }
 
+  /** Cuts every convex edge back at 45 degrees by `radius` mm. */
+  async chamfer(radius: number) {
+    return new Part(await chamfer(this.doc, this.object, radius), this.doc)
+  }
+
   /** Base color as "#rrggbb" or a 0xrrggbb number. */
   color(value: string | number) {
     const hex = typeof value === 'string' ? parseInt(value.replace('#', ''), 16) : value
@@ -82,7 +87,7 @@ class Part {
 export const STARTER_SCRIPT = `// Every shape takes an object of dimensions in mm; anything left out uses the default.
 // Shapes: ${CATEGORIES.flatMap((c) => c.shapes.map((s) => s.spec.kind)).join(', ')}
 // Parts:  .at(x,y,z)  .move(dx,dy,dz)  .rotate(x,y,z)  .scale(f)  .mirror('x')  .drop()  .clone()  .color('#c9a')  .name('...')
-// Async:  await part.fillet(2)  (rounds every edge by 2 mm)
+// Async:  await part.fillet(2)  await part.chamfer(1)
 // Also:   union(a, b, ...)  subtract(target, ...tools)  intersect(a, b, ...)  clear()  fit()  print(...)
 
 clear()

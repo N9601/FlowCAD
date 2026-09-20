@@ -55,6 +55,18 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
     mm('height', 'Height'),
     { key: 'twist', label: 'Twist (deg)', min: -3600, max: 3600, step: 15 },
   ],
+  pipe: [
+    { key: 'path', label: 'Path x,y,z', min: 0, step: 1, string: true },
+    mm('radius', 'Radius'),
+    SEGMENTS,
+  ],
+  spring: [
+    mm('coilRadius', 'Coil radius'),
+    mm('wireRadius', 'Wire radius'),
+    mm('pitch', 'Pitch per turn'),
+    { key: 'turns', label: 'Turns', min: 0.5, max: 200, step: 0.5 },
+    SEGMENTS,
+  ],
   text: [{ key: 'text', label: 'Text', min: 0, step: 1, string: true }, mm('letterHeight', 'Letter height'), mm('thickness', 'Thickness')],
   bolt: [METRIC, mm('length', 'Shank length')],
   nut: [METRIC, { key: 'clearance', label: 'Thread clearance', min: 0, max: 1, step: 0.05 }],

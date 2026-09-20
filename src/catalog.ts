@@ -1,4 +1,5 @@
 import type { PrimitiveSpec } from './csg/protocol'
+import { parsePath } from './csg/pipe'
 import { parseProfile } from './csg/profile'
 import { grooveOpening } from './csg/shapes'
 
@@ -39,6 +40,8 @@ export const CATEGORIES: { title: string; shapes: Shape[] }[] = [
       { label: 'Bolt', spec: { kind: 'bolt', size: 8, length: 25 } },
       { label: 'Nut', spec: { kind: 'nut', size: 8, clearance: 0.15 } },
       { label: 'Rod', spec: { kind: 'rod', size: 8, length: 40 } },
+      { label: 'Pipe', spec: { kind: 'pipe', path: '-30,0,0 30,0,0 30,30,0 30,30,30', radius: 2, segments: 24 } },
+      { label: 'Spring', spec: { kind: 'spring', coilRadius: 12, wireRadius: 2, pitch: 6, turns: 6, segments: 24 } },
       { label: 'Pulley', spec: { kind: 'pulley', diameter: 40, width: 12, grooveDepth: 6, bore: 8 } },
       { label: 'Gear', spec: { kind: 'gear', module: 2, teeth: 20, pressureAngle: 20, thickness: 8, bore: 8 } },
     ],
@@ -65,6 +68,8 @@ export function checkSpec(spec: PrimitiveSpec) {
   }
   if (spec.kind === 'revolve') parseProfile(spec.profile, true)
   if (spec.kind === 'extrude') parseProfile(spec.profile, false)
+  if (spec.kind === 'pipe') parsePath(spec.path)
+  if (spec.kind === 'spring' && spec.turns <= 0) throw new Error('Spring needs at least one turn')
   if (spec.kind === 'text' && (spec.text.trim() === '' || spec.text.length > 60)) {
     throw new Error('Text must be 1 to 60 characters')
   }

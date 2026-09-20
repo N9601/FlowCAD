@@ -18,6 +18,8 @@ export type PrimitiveSpec =
   | { kind: 'dome'; radius: number; segments: number }
   | { kind: 'capsule'; radius: number; length: number; segments: number }
   | { kind: 'pulley'; diameter: number; width: number; grooveDepth: number; bore: number }
+  | { kind: 'pipe'; path: string; radius: number; segments: number }
+  | { kind: 'spring'; coilRadius: number; wireRadius: number; pitch: number; turns: number; segments: number }
   /** `profile` is "radius,height" points; the outline is turned around the Z axis. */
   | { kind: 'revolve'; profile: string; angle: number; segments: number }
   /** `profile` is "x,y" points; `twist` is in degrees over the full height. */
@@ -47,8 +49,8 @@ export interface CsgNode {
   matrix: number[]
   spec?: PrimitiveSpec
   solid?: SolidData
-  op?: BooleanOp | 'fillet'
-  /** Radius for fillet, in mm. */
+  op?: BooleanOp | 'fillet' | 'chamfer'
+  /** Radius for fillet or chamfer, in mm. */
   radius?: number
   children?: CsgNode[]
 }
