@@ -6,6 +6,8 @@ FlowCAD reads and writes STL, OBJ, 3MF, GLB, PLY, SVG, DXF and its own JSON `.fl
 from one tab. It builds solids with the Manifold kernel in a Web Worker, so every union, fillet and
 extrude is watertight and the UI never blocks.
 
+Press **?** in the app for the full shortcut reference.
+
 ## Features
 
 ### Modeling
@@ -13,7 +15,7 @@ extrude is watertight and the UI never blocks.
 - 25+ parametric primitives across three categories:
   - **Basic:** cube, cylinder, sphere, cone, tube, torus
   - **More solids:** prism, pyramid, wedge, rounded box, dome, capsule, revolve, extrude (with twist and
-    taper), ArcSphere (partial sphere), text (bundled Roboto Bold), pipe (polyline sweep), spring (helix)
+    taper), ArcSphere, text (bundled Roboto Bold), pipe (polyline sweep), spring (helix)
   - **Mechanical:** bolt, nut, threaded rod (M2 to M24, ISO 68-1 60-degree thread), pulley (V-belt),
     involute spur gear
 - Boolean **union / subtract / intersect** on any number of objects; subtract removes every later input
@@ -28,14 +30,28 @@ extrude is watertight and the UI never blocks.
 
 ### Editing
 
-- Click to select, shift-click to add, shift-drag to box-select
-- Move / rotate / scale gizmo with configurable snap (0.1 / 0.5 / 1 / 5 / 10 mm)
+- Click to select an object, or the whole group if it's grouped. **Alt-click** for single. Shift-click to
+  add/remove. Shift-drag to box-select. Right-click for a context menu with the common actions.
+- Objects hover-highlight so you know what will be picked
+- Move / rotate / scale gizmo with configurable snap (0.1 / 0.5 / 1 / 5 / 10 mm); dragging one member
+  of a group moves the whole group together
 - Numeric position, rotation and scale entry in the properties panel
 - Live size, volume, surface area and triangle count on the selected object
-- Per-object color picker; visibility toggle in the object list
-- Layout tools: drop-to-bed, mirror on any axis, align to a target, linear or circular arrays
+- Per-object color picker (new shapes cycle through an auto palette); visibility toggle in the list
+- **Groups:** tag any selection with a shared group id; every member selects and moves together
+- Layout tools: drop-to-bed, drop-onto-surface, mirror on any axis, align to a target, linear or
+  circular arrays
 - Measure tool: click two points on any model for distance and its X/Y/Z components (corner snapping)
 - Undo / redo, 200 levels
+- Stats overlay in the corner: fps, triangle count, object count
+
+### Camera and view
+
+- **Fit** (F), standard **front / right / top / iso** views (1-4)
+- **X-ray** transparency, live **cross-section** clipping (C)
+- **Spin** toggles a 20 deg/s auto-turntable
+- **Snapshot** downloads the current frame as `flowcad-view.png`
+- Room-environment lighting with real reflections
 
 ### Import / export
 
@@ -43,7 +59,8 @@ extrude is watertight and the UI never blocks.
   imports are welded and checked watertight so they work in booleans
 - **Export mesh:** STL, OBJ, 3MF, GLB, PLY of the selection, or of everything when nothing is selected
 - **Export section:** 1:1 mm SVG or DXF at any Z height
-- **Save project:** everything (positions, colors, boolean history) as a `.flowcad` JSON file
+- **Save project:** the whole scene (positions, colors, groups, boolean history) as a `.flowcad` JSON file
+- **Export BOM:** bill of materials as CSV (name, color, size, volume, triangle count, group)
 - Scene autosaves to IndexedDB and is restored on reload
 
 ### Scripting
@@ -81,22 +98,6 @@ Problem faces are coloured on the model (red = support, amber = thin wall) and t
 estimated. **Fix issues automatically** reorients each part to its flattest side, scales down to fit
 the build volume, and drops to the bed in one click.
 
-## Shortcuts
-
-| Key | Action |
-| --- | --- |
-| W / E / R | Move / rotate / scale |
-| X | X-ray mode |
-| C | Toggle live cross-section |
-| M | Toggle the measure tool |
-| B | Drop the selection to the bed |
-| F | Fit selection (or everything) in view |
-| 1 / 2 / 3 / 4 | Front / right / top / iso view |
-| Ctrl+D | Duplicate selection |
-| Delete | Delete selection |
-| Ctrl+Z, Ctrl+Y | Undo, redo |
-| Esc | Clear selection |
-
 ## Development
 
 ```bash
@@ -112,8 +113,8 @@ npm run build
 
 | Path | Role |
 | --- | --- |
-| `src/viewport.ts` | Scene, camera, renderer, orbit controls, framing |
-| `src/document.ts` | Scene objects, selection, gizmo, undo history, colors, visibility |
+| `src/viewport.ts` | Scene, camera, renderer, orbit controls, framing, turntable, screenshot |
+| `src/document.ts` | Scene objects, selection, groups, gizmo, undo history, colors, visibility |
 | `src/csg/` | Manifold WASM worker, typed request protocol, promise client |
 | `src/csg/gear.ts`, `csg/thread.ts`, `csg/iso.ts` | Gear profile, thread and fastener generators, ISO size table |
 | `src/csg/shapes.ts`, `csg/text.ts`, `csg/profile.ts`, `csg/pipe.ts` | Extra solids, font outlines, profile and path parsing |
@@ -122,12 +123,15 @@ npm run build
 | `src/palette.ts` | Categorized left shape palette |
 | `src/panel.ts` | Object list and properties editor |
 | `src/toolbar.ts` | Toolbar and keyboard bindings |
-| `src/toolspanel.ts`, `src/arrange.ts` | Layout tools (drop, mirror, align, arrays) |
+| `src/toolspanel.ts`, `src/arrange.ts` | Layout tools (drop, drop-onto-surface, mirror, align, arrays) |
 | `src/measure.ts` | Measure tool with corner snapping |
 | `src/section.ts` | Live cross-section clipping |
 | `src/printcheck.ts`, `src/printfix.ts`, `src/printpanel.ts` | Print check, auto-fix and its panel |
 | `src/console.ts`, `src/script.ts` | Script API and console drawer, with bundled showcase scenes |
-| `src/io/` | STL, OBJ, GLB, PLY import/export, 3MF export, SVG/DXF sections, .flowcad projects, ZIP writer, winding fix |
+| `src/contextmenu.ts` | Right-click menu |
+| `src/help.ts` | Shortcut reference overlay |
+| `src/stats.ts` | fps / triangle / object overlay |
+| `src/io/` | STL, OBJ, GLB, PLY import/export, 3MF export, SVG/DXF sections, .flowcad projects, BOM CSV, ZIP writer, winding fix |
 | `src/storage.ts` | IndexedDB autosave |
 
 Every object keeps its indexed watertight mesh (`SolidData`) alongside the display mesh. Booleans and
