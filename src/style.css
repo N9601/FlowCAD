@@ -270,6 +270,11 @@ button:disabled {
   color: var(--muted);
 }
 
+#toolbar input[type='range'] {
+  width: 120px;
+  padding: 0;
+}
+
 #toolbar select,
 #toolbar .field input {
   width: 60px;

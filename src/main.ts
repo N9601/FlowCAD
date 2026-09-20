@@ -5,6 +5,7 @@ import { buildMeasure } from './measure'
 import { buildPalette } from './palette'
 import { buildPanel } from './panel'
 import { buildPrintCheck } from './printpanel'
+import { buildSectionView } from './section'
 import { autosave } from './storage'
 import { buildToolbar } from './toolbar'
 import { buildToolsPanel } from './toolspanel'
@@ -23,6 +24,7 @@ buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
 buildToolsPanel($('#panel').appendChild(document.createElement('section')), $('#statusbar'), doc)
 buildPrintCheck($('#toolbar'), $('#panel'), $('#statusbar'), doc)
+buildSectionView($('#toolbar'), view, doc, $('#statusbar'))
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
