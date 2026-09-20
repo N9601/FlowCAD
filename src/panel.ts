@@ -170,10 +170,12 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
         doc.toggleVisible(obj)
       })
       item.appendChild(el('span', 'name', obj.name))
+      if (obj.groupId !== undefined) item.appendChild(el('span', 'tag', 'G' + obj.groupId))
       item.addEventListener('click', (e) => {
-        if (!e.shiftKey) doc.select([obj])
-        else if (rank !== -1) doc.select(doc.selection.filter((o) => o !== obj))
-        else doc.select([...doc.selection, obj])
+        const targets = e.altKey ? [obj] : doc.expandGroups([obj])
+        if (!e.shiftKey) doc.select(targets)
+        else if (rank !== -1) doc.select(doc.selection.filter((o) => !targets.includes(o)))
+        else doc.select([...doc.selection, ...targets.filter((o) => !doc.selection.includes(o))])
       })
     }
   }

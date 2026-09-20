@@ -46,6 +46,23 @@ export function buildToolsPanel(section: HTMLElement, status: HTMLElement, doc: 
       })
     }
 
+    const groupIds = new Set(selection.map((o) => o.groupId).filter((id): id is number => id !== undefined))
+    if (selection.length >= 2 || groupIds.size > 0) {
+      const groupRow = buttonRow()
+      if (selection.length >= 2) {
+        action(groupRow, 'Group', () => {
+          const id = doc.groupSelection()
+          if (id !== undefined) status.textContent = `Grouped ${selection.length} objects into G${id}`
+        })
+      }
+      if (groupIds.size > 0) {
+        action(groupRow, 'Ungroup', () => {
+          doc.ungroupSelection()
+          status.textContent = 'Ungrouped'
+        })
+      }
+    }
+
     action(buttonRow(), 'Drop to bed (B)', () => dropToBed(selection))
 
     section.appendChild(el('h3', undefined, 'Mirror'))

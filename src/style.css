@@ -118,6 +118,16 @@ body {
   background: #40352a;
 }
 
+#panel .tag {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 3px;
+  color: #101318;
+  background: #56d364;
+  font-size: 10px;
+  font-weight: 600;
+}
+
 #panel .item.node {
   padding: 2px 8px;
 }

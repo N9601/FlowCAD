@@ -18,6 +18,8 @@ export interface SceneObject {
   solid: SolidData
   /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
   visible: boolean
+  /** Objects sharing a groupId select and move together. */
+  groupId?: number
   spec?: PrimitiveSpec
   /** Present on boolean results: how to rebuild `solid`, in the object's local frame. Never mutated. */
   tree?: CsgNode
@@ -29,6 +31,7 @@ interface ObjectState {
   name: string
   color: number
   visible: boolean
+  groupId?: number
   solid: SolidData
   spec?: PrimitiveSpec
   tree?: CsgNode
@@ -76,6 +79,7 @@ export class CadDocument extends EventTarget {
   private readonly view: Viewport
   private readonly gizmo: TransformControls
   private nextId = 1
+  private nextGroupId = 1
   private history: Snapshot[] = [[]]
   private cursor = 0
   private xray = false
@@ -91,15 +95,35 @@ export class CadDocument extends EventTarget {
     this.gizmo.setRotationSnap(THREE.MathUtils.degToRad(15))
     this.gizmo.setScaleSnap(0.1)
     const dragStart = new THREE.Matrix4()
+    // Snapshot of every non-anchor selected object's transform relative to the anchor; drives group drag.
+    const groupOffsets = new Map<SceneObject, THREE.Matrix4>()
     this.gizmo.addEventListener('dragging-changed', (e) => {
       view.controls.enabled = !e.value
       const mesh = this.gizmo.object
       if (!mesh) return
       mesh.updateMatrix()
-      if (e.value) dragStart.copy(mesh.matrix)
-      else if (!dragStart.equals(mesh.matrix)) this.commit()
+      if (e.value) {
+        dragStart.copy(mesh.matrix)
+        groupOffsets.clear()
+        const anchorInverse = new THREE.Matrix4().copy(mesh.matrix).invert()
+        for (const obj of this.selection) {
+          if (obj.mesh === mesh) continue
+          obj.mesh.updateMatrix()
+          groupOffsets.set(obj, anchorInverse.clone().multiply(obj.mesh.matrix))
+        }
+      } else if (!dragStart.equals(mesh.matrix)) this.commit()
     })
-    this.gizmo.addEventListener('objectChange', () => this.dispatchEvent(new Event('transform')))
+    this.gizmo.addEventListener('objectChange', () => {
+      const mesh = this.gizmo.object
+      if (mesh && groupOffsets.size > 0) {
+        mesh.updateMatrix()
+        for (const [obj, offset] of groupOffsets) {
+          const target = mesh.matrix.clone().multiply(offset)
+          target.decompose(obj.mesh.position, obj.mesh.quaternion, obj.mesh.scale)
+        }
+      }
+      this.dispatchEvent(new Event('transform'))
+    })
     view.scene.add(this.gizmo.getHelper())
 
     this.bindPicking(view.renderer.domElement)
@@ -222,6 +246,32 @@ export class CadDocument extends EventTarget {
     this.gizmo.setTranslationSnap(step)
   }
 
+  /** Tags every selected object with a new shared group id. Returns the id, or undefined if < 2 selected. */
+  groupSelection(): number | undefined {
+    if (this.selection.length < 2) return undefined
+    const id = this.nextGroupId++
+    for (const obj of this.selection) obj.groupId = id
+    this.dispatchEvent(new Event('change'))
+    return id
+  }
+
+  /** Clears the group tag from every object that shares a group with any selected object. */
+  ungroupSelection() {
+    const ids = new Set(this.selection.map((o) => o.groupId).filter((id): id is number => id !== undefined))
+    if (ids.size === 0) return
+    for (const obj of this.objects) if (obj.groupId !== undefined && ids.has(obj.groupId)) delete obj.groupId
+    this.dispatchEvent(new Event('change'))
+  }
+
+  /** Every object sharing any of the groups the given seeds belong to, plus the seeds themselves. */
+  expandGroups(seeds: readonly SceneObject[]): SceneObject[] {
+    const ids = new Set(seeds.map((o) => o.groupId).filter((id): id is number => id !== undefined))
+    if (ids.size === 0) return [...seeds]
+    const set = new Set(seeds)
+    for (const obj of this.objects) if (obj.groupId !== undefined && ids.has(obj.groupId)) set.add(obj)
+    return [...set]
+  }
+
   toggleVisible(obj: SceneObject) {
     obj.visible = !obj.visible
     obj.mesh.visible = obj.visible
@@ -232,7 +282,7 @@ export class CadDocument extends EventTarget {
   commit() {
     const snapshot: Snapshot = this.objects.map((o) => {
       o.mesh.updateMatrix()
-      return { id: o.id, name: o.name, color: o.color, visible: o.visible, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
+      return { id: o.id, name: o.name, color: o.color, visible: o.visible, groupId: o.groupId, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
     })
     this.history.length = this.cursor + 1
     this.history.push(snapshot)
@@ -367,10 +417,11 @@ export class CadDocument extends EventTarget {
       const hit = raycaster.intersectObjects(this.objects.map((o) => o.mesh), false)[0]
       const obj = hit && this.objects.find((o) => o.mesh === hit.object)
 
+      const targets = obj ? (e.altKey ? [obj] : this.expandGroups([obj])) : []
       if (!obj) this.select([])
-      else if (!e.shiftKey) this.select([obj])
-      else if (this.selection.includes(obj)) this.select(this.selection.filter((o) => o !== obj))
-      else this.select([...this.selection, obj])
+      else if (!e.shiftKey) this.select(targets)
+      else if (this.selection.includes(obj)) this.select(this.selection.filter((o) => !targets.includes(o)))
+      else this.select([...this.selection, ...targets.filter((o) => !this.selection.includes(o))])
     })
   }
 }
