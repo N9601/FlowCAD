@@ -363,6 +363,55 @@ button:disabled {
   color: #ff7b72;
 }
 
+.context-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 180px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.context-menu .entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.context-menu .entry.disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.context-menu .entry:not(.disabled):hover {
+  background: var(--accent);
+  color: #101318;
+}
+
+.context-menu .keys {
+  margin-left: 12px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.stats-overlay {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgb(16 19 24 / 0.65);
+  color: var(--muted);
+  font: 11px/1.3 ui-monospace, Consolas, monospace;
+  pointer-events: none;
+}
+
 .measure-label {
   position: absolute;
   transform: translate(-50%, -140%);
