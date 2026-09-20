@@ -196,6 +196,8 @@ export class CadDocument extends EventTarget {
       displayGeometry(state.solid),
       new THREE.MeshStandardMaterial({ color: state.color, roughness: 0.55, metalness: 0.1 }),
     )
+    mesh.castShadow = true
+    mesh.receiveShadow = true
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
     this.applyXray(mesh.material)
     mesh.visible = state.visible

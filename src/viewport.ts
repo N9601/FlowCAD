@@ -41,6 +41,8 @@ export class Viewport {
     // preserveDrawingBuffer keeps the last frame available for canvas.toDataURL() screenshots.
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
     this.renderer.setPixelRatio(window.devicePixelRatio)
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(this.renderer.domElement)
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
@@ -55,12 +57,33 @@ export class Viewport {
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3f48, 0.6))
     const key = new THREE.DirectionalLight(0xffffff, 1.2)
     key.position.set(60, -80, 120)
+    key.castShadow = true
+    key.shadow.mapSize.set(2048, 2048)
+    key.shadow.bias = -0.0005
+    key.shadow.radius = 4
+    // Wide shadow frustum so large scenes like the NYC skyline still cast full shadows.
+    const cam = key.shadow.camera as THREE.OrthographicCamera
+    cam.left = -250
+    cam.right = 250
+    cam.top = 250
+    cam.bottom = -250
+    cam.near = 0.5
+    cam.far = 500
+    cam.updateProjectionMatrix()
     this.scene.add(key)
 
     const grid = new THREE.GridHelper(200, 20, 0x556070, 0x343a44)
     grid.rotation.x = Math.PI / 2
     this.scene.add(grid)
     this.scene.add(new THREE.AxesHelper(30))
+
+    // Invisible plane at Z = 0 catches shadows so objects appear grounded without hiding the grid.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(2000, 2000),
+      new THREE.ShadowMaterial({ opacity: 0.35 }),
+    )
+    ground.receiveShadow = true
+    this.scene.add(ground)
 
     // Post-processing pipeline: normal render + outline pass around selected objects.
     this.composer = new EffectComposer(this.renderer)
