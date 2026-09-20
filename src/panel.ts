@@ -1,8 +1,8 @@
 import * as THREE from 'three'
+import { checkSpec } from './catalog'
 import { csg } from './csg/client'
 import { METRIC_SIZES } from './csg/iso'
 import type { CsgNode, PrimitiveSpec } from './csg/protocol'
-import { grooveOpening } from './csg/shapes'
 import type { CadDocument, NewPart, SceneObject } from './document'
 
 interface Field {
@@ -54,34 +54,6 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
     mm('thickness', 'Thickness'),
     { key: 'bore', label: 'Bore diameter', min: 0, step: 1 },
   ],
-}
-
-function checkSpec(spec: PrimitiveSpec) {
-  if (spec.kind === 'tube' && spec.innerRadius >= spec.outerRadius) {
-    throw new Error('Inner radius must be smaller than outer radius')
-  }
-  if (spec.kind === 'torus' && spec.minorRadius >= spec.majorRadius) {
-    throw new Error('Tube radius must be smaller than major radius')
-  }
-  if (spec.kind === 'roundedBox' && spec.radius * 2 >= Math.min(spec.x, spec.y, spec.z)) {
-    throw new Error('Corner radius must be less than half the smallest side')
-  }
-  if (spec.kind === 'capsule' && spec.length <= spec.radius * 2) {
-    throw new Error('Overall length must be more than twice the radius')
-  }
-  if (spec.kind === 'pulley') {
-    if (grooveOpening(spec.width, spec.grooveDepth) >= spec.width) throw new Error('Groove is too deep for this width')
-    if (spec.bore / 2 >= spec.diameter / 2 - spec.grooveDepth) throw new Error('Bore must be smaller than the groove diameter')
-  }
-  if (spec.kind === 'text' && (spec.text.trim() === '' || spec.text.length > 60)) {
-    throw new Error('Text must be 1 to 60 characters')
-  }
-  if ((spec.kind === 'bolt' || spec.kind === 'rod') && spec.length > 200) {
-    throw new Error('Length is limited to 200 mm')
-  }
-  if (spec.kind === 'gear' && spec.bore >= spec.module * (spec.teeth - 2.5)) {
-    throw new Error('Bore must be smaller than the root diameter')
-  }
 }
 
 /** Volume (mm^3) and surface area (mm^2) of an object in world space. */

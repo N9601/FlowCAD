@@ -1,4 +1,4 @@
-import { Matrix4 } from 'three'
+import { combine } from './actions'
 import { csg } from './csg/client'
 import type { BooleanOp } from './csg/protocol'
 import type { CadDocument } from './document'
@@ -39,12 +39,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
         const inputs = [...doc.selection]
         const started = performance.now()
         status.textContent = `${label}...`
-        const tree = { name: label, op, children: inputs.map((o) => doc.nodeOf(o)), matrix: new Matrix4().toArray() }
-        const solid = await csg.evaluate(tree)
-        doc.remove(inputs)
-        const result = doc.add(label, solid)
-        // add() moved the pivot to the bounding-box centre; shift the tree into that local frame.
-        result.tree = { ...tree, matrix: new Matrix4().setPosition(result.mesh.position.clone().negate()).toArray() }
+        await combine(doc, op, inputs)
         doc.commit()
         status.textContent = `${label} done in ${(performance.now() - started).toFixed(0)} ms`
       }),
