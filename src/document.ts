@@ -61,6 +61,7 @@ export class CadDocument extends EventTarget {
   private nextId = 1
   private history: Snapshot[] = [[]]
   private cursor = 0
+  private xray = false
 
   constructor(view: Viewport) {
     super()
@@ -120,6 +121,7 @@ export class CadDocument extends EventTarget {
       new THREE.MeshStandardMaterial({ color: COLOR, roughness: 0.55, metalness: 0.1 }),
     )
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
+    this.applyXray(mesh.material)
     const obj: SceneObject = { id, name, solid, spec, mesh }
     this.objects.push(obj)
     this.view.scene.add(mesh)
@@ -148,6 +150,19 @@ export class CadDocument extends EventTarget {
     if (last) this.gizmo.attach(last.mesh)
     else this.gizmo.detach()
     this.dispatchEvent(new Event('change'))
+  }
+
+  toggleXray() {
+    this.xray = !this.xray
+    for (const obj of this.objects) this.applyXray(obj.mesh.material)
+  }
+
+  private applyXray(material: THREE.MeshStandardMaterial) {
+    material.transparent = this.xray
+    material.opacity = this.xray ? 0.35 : 1
+    material.depthWrite = !this.xray
+    material.side = this.xray ? THREE.DoubleSide : THREE.FrontSide
+    material.needsUpdate = true
   }
 
   setGizmoMode(mode: 'translate' | 'rotate' | 'scale') {
