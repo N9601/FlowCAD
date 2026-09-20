@@ -508,6 +508,23 @@ button:disabled {
   margin-top: 14px;
 }
 
+.navcube {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 90px;
+  height: 90px;
+  pointer-events: none;
+}
+
+.navcube canvas {
+  pointer-events: auto;
+  background: rgb(16 19 24 / 0.35);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .stats-overlay {
   position: absolute;
   right: 6px;

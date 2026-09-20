@@ -7,6 +7,7 @@ import { buildPanel } from './panel'
 import { buildContextMenu } from './contextmenu'
 import { buildCommandPalette } from './command-palette'
 import { buildDrawTools } from './draw'
+import { buildNavCube } from './navcube'
 import { buildHelp } from './help'
 import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
@@ -35,6 +36,7 @@ buildStats($('#scene'), doc)
 buildHelp($('#toolbar'))
 buildCommandPalette(doc, view, $('#statusbar'))
 buildDrawTools($('#toolbar'), view, doc, $('#statusbar'))
+buildNavCube($('#scene'), view, doc)
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
