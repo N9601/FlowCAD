@@ -1,4 +1,4 @@
-import type { BooleanOp, CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
+import type { CsgNode, CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
 
 const worker = new Worker(new URL('./csg.worker.ts', import.meta.url), { type: 'module' })
 const pending = new Map<number, { resolve: (r: never) => void; reject: (e: Error) => void }>()
@@ -25,5 +25,5 @@ export const csg = {
   primitive: (spec: PrimitiveSpec) => call({ type: 'primitive', spec }),
   validate: (solid: SolidData) => call({ type: 'validate', solid }),
   section: (parts: PlacedSolid[], z: number) => call<Outline[]>({ type: 'section', parts, z }),
-  boolean: (op: BooleanOp, parts: PlacedSolid[]) => call({ type: 'boolean', op, parts }),
+  evaluate: (node: CsgNode) => call({ type: 'evaluate', node }),
 }

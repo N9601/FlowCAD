@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { TransformControls } from 'three/addons/controls/TransformControls.js'
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
-import type { PlacedSolid, PrimitiveSpec, SolidData } from './csg/protocol'
+import type { CsgNode, PlacedSolid, PrimitiveSpec, SolidData } from './csg/protocol'
 import type { Viewport } from './viewport'
 
 const CREASE_ANGLE = THREE.MathUtils.degToRad(35)
@@ -17,14 +17,27 @@ export interface SceneObject {
   solid: SolidData
   /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
   spec?: PrimitiveSpec
+  /** Present on boolean results: how to rebuild `solid`, in the object's local frame. Never mutated. */
+  tree?: CsgNode
   mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
 }
 
-/** Solids are immutable once added, so snapshots share them by reference. */
-type Snapshot = { id: number; name: string; solid: SolidData; spec?: PrimitiveSpec; matrix: THREE.Matrix4 }[]
+interface ObjectState {
+  id: number
+  name: string
+  solid: SolidData
+  spec?: PrimitiveSpec
+  tree?: CsgNode
+}
+
+/** Solids and trees are immutable once added, so snapshots share them by reference. */
+type Snapshot = (ObjectState & { matrix: THREE.Matrix4 })[]
 
 /** Plain-data form of the scene, safe for structured clone into IndexedDB. */
-export type SavedDocument = { id: number; name: string; solid: SolidData; spec?: PrimitiveSpec; matrix: number[] }[]
+export type SavedDocument = (ObjectState & { matrix: number[] })[]
+
+/** A new object described in world space, used when ungrouping. */
+export type NewPart = Omit<ObjectState, 'id'> & { matrix: THREE.Matrix4 }
 
 const geometryCache = new WeakMap<SolidData, THREE.BufferGeometry>()
 
@@ -91,9 +104,37 @@ export class CadDocument extends EventTarget {
     const { box, centre } = recentre(solid)
     if (spec) centre.z = (box.max.z - box.min.z) / 2
     const id = this.nextId++
-    const obj = this.insert(id, `${name} ${id}`, solid, new THREE.Matrix4().setPosition(centre), spec)
+    const obj = this.insert({ id, name: `${name} ${id}`, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
     this.select([obj])
     return obj
+  }
+
+  /** Describes an object as a tree node in world space, for use as a boolean input. */
+  nodeOf(obj: SceneObject): CsgNode {
+    obj.mesh.updateMatrixWorld()
+    const world = obj.mesh.matrixWorld
+    if (obj.tree) {
+      const matrix = world.clone().multiply(new THREE.Matrix4().fromArray(obj.tree.matrix)).toArray()
+      return { ...obj.tree, name: obj.name, matrix }
+    }
+    const geometry = obj.spec ? { spec: obj.spec } : { solid: obj.solid }
+    return { name: obj.name, matrix: world.toArray(), ...geometry }
+  }
+
+  /** Swaps in geometry rebuilt from an edited tree. The local frame is kept, so nothing jumps. */
+  setTree(obj: SceneObject, solid: SolidData, tree: CsgNode) {
+    obj.mesh.geometry.dispose()
+    obj.solid = solid
+    obj.tree = tree
+    obj.mesh.geometry = displayGeometry(solid)
+    this.commit()
+  }
+
+  /** Replaces an object with the given parts as one undo step. */
+  replaceWith(obj: SceneObject, parts: readonly NewPart[]) {
+    this.remove([obj])
+    this.select(parts.map((part) => this.insert({ ...part, id: this.nextId++ })))
+    this.commit()
   }
 
   /** Swaps in regenerated geometry, keeping the object's transform. */
@@ -109,20 +150,14 @@ export class CadDocument extends EventTarget {
     this.commit()
   }
 
-  private insert(
-    id: number,
-    name: string,
-    solid: SolidData,
-    matrix: THREE.Matrix4,
-    spec?: PrimitiveSpec,
-  ): SceneObject {
+  private insert({ matrix, ...state }: ObjectState & { matrix: THREE.Matrix4 }): SceneObject {
     const mesh = new THREE.Mesh(
-      displayGeometry(solid),
+      displayGeometry(state.solid),
       new THREE.MeshStandardMaterial({ color: COLOR, roughness: 0.55, metalness: 0.1 }),
     )
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
     this.applyXray(mesh.material)
-    const obj: SceneObject = { id, name, solid, spec, mesh }
+    const obj: SceneObject = { ...state, mesh }
     this.objects.push(obj)
     this.view.scene.add(mesh)
     return obj
@@ -173,7 +208,7 @@ export class CadDocument extends EventTarget {
   commit() {
     const snapshot: Snapshot = this.objects.map((o) => {
       o.mesh.updateMatrix()
-      return { id: o.id, name: o.name, solid: o.solid, spec: o.spec, matrix: o.mesh.matrix.clone() }
+      return { id: o.id, name: o.name, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
     })
     this.history.length = this.cursor + 1
     this.history.push(snapshot)
@@ -203,8 +238,7 @@ export class CadDocument extends EventTarget {
       const size = new THREE.Box3().setFromObject(src.mesh).getSize(new THREE.Vector3())
       const matrix = src.mesh.matrix.clone()
       matrix.elements[12] += size.x + 5
-      const id = this.nextId++
-      return this.insert(id, `${src.name} copy`, src.solid, matrix, src.spec)
+      return this.insert({ id: this.nextId++, name: `${src.name} copy`, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
     })
     if (copies.length === 0) return
     this.select(copies)
@@ -233,7 +267,7 @@ export class CadDocument extends EventTarget {
 
   private restore(snapshot: Snapshot) {
     this.remove([...this.objects])
-    for (const s of snapshot) this.insert(s.id, s.name, s.solid, s.matrix, s.spec)
+    for (const s of snapshot) this.insert(s)
     this.select([])
   }
 

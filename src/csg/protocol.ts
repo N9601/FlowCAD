@@ -24,13 +24,27 @@ export interface PlacedSolid {
   matrix: number[]
 }
 
+/**
+ * Node of a non-destructive CSG tree. A node is exactly one of: a parametric primitive (`spec`),
+ * a fixed mesh (`solid`), or a boolean of its `children` (`op`). `matrix` places the node in its
+ * parent's frame; primitives are centred on their bounding box before it is applied.
+ */
+export interface CsgNode {
+  name: string
+  matrix: number[]
+  spec?: PrimitiveSpec
+  solid?: SolidData
+  op?: BooleanOp
+  children?: CsgNode[]
+}
+
 /** Closed 2D loop of xy points. Outer loops are counter-clockwise, holes clockwise. */
 export type Outline = [number, number][]
 
 export type CsgRequest =
   | { type: 'primitive'; spec: PrimitiveSpec }
-  /** Subtract removes every later part from the first one. */
-  | { type: 'boolean'; op: BooleanOp; parts: PlacedSolid[] }
+  /** Subtract nodes remove every later child from the first one. */
+  | { type: 'evaluate'; node: CsgNode }
   | { type: 'validate'; solid: SolidData }
   /** Cross-section of the union of all parts at world height z. */
   | { type: 'section'; parts: PlacedSolid[]; z: number }

@@ -4,7 +4,7 @@ import type { Manifold, Mat4 } from 'manifold-3d'
 import wasmUrl from 'manifold-3d/manifold.wasm?url'
 import { gearProfile } from './gear'
 import { bolt, nut, rod } from './thread'
-import type { CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
+import type { CsgNode, CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
 
 const ready = Module({ locateFile: () => wasmUrl }).then((wasm) => {
   wasm.setup()
@@ -83,6 +83,28 @@ function toSolid(m: Manifold): SolidData {
   return { positions, indices: mesh.triVerts }
 }
 
+function evaluate(wasm: Wasm, node: CsgNode): Manifold {
+  let local: Manifold
+  if (node.op) {
+    const children = (node.children ?? []).map((child) => evaluate(wasm, child))
+    const combine = { union: wasm.Manifold.union, subtract: wasm.Manifold.difference, intersect: wasm.Manifold.intersection }
+    local = combine[node.op](children)
+    for (const child of children) child.delete()
+  } else if (node.spec) {
+    const raw = primitive(wasm, node.spec)
+    const { min, max } = raw.boundingBox()
+    local = raw.translate([-(min[0] + max[0]) / 2, -(min[1] + max[1]) / 2, -(min[2] + max[2]) / 2])
+    raw.delete()
+  } else if (node.solid) {
+    local = new wasm.Manifold(new wasm.Mesh({ numProp: 3, vertProperties: node.solid.positions, triVerts: node.solid.indices }))
+  } else {
+    throw new Error(`${node.name} has no geometry`)
+  }
+  const placed = local.transform(node.matrix as unknown as Mat4)
+  local.delete()
+  return placed
+}
+
 function section(wasm: Wasm, placed: PlacedSolid[], z: number): Outline[] {
   const parts = placed.map((p) => place(wasm, p))
   const merged = wasm.Manifold.union(parts)
@@ -125,14 +147,11 @@ function run(wasm: Wasm, req: CsgRequest): SolidData | Outline[] {
     }
   }
 
-  const parts = req.parts.map((p) => place(wasm, p))
-  const combine = { union: wasm.Manifold.union, subtract: wasm.Manifold.difference, intersect: wasm.Manifold.intersection }
-  const result = combine[req.op](parts)
+  const result = evaluate(wasm, req.node)
   try {
-    if (result.isEmpty()) throw new Error(`${req.op} produced an empty solid`)
+    if (result.isEmpty()) throw new Error(`${req.node.op ?? req.node.name} produced an empty solid`)
     return toSolid(result)
   } finally {
-    for (const p of parts) p.delete()
     result.delete()
   }
 }
