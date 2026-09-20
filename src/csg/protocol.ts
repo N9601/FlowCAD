@@ -5,7 +5,7 @@ export interface SolidData {
 }
 
 export type PrimitiveSpec =
-  | { kind: 'cube'; size: [number, number, number] }
+  | { kind: 'cube'; x: number; y: number; z: number }
   | { kind: 'cylinder'; radius: number; height: number; segments: number }
   | { kind: 'sphere'; radius: number; segments: number }
   | { kind: 'cone'; radius: number; height: number; segments: number }

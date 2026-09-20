@@ -4,7 +4,7 @@ import type { CadDocument } from './document'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
 const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
-  { label: 'Cube', spec: { kind: 'cube', size: [20, 20, 20] } },
+  { label: 'Cube', spec: { kind: 'cube', x: 20, y: 20, z: 20 } },
   { label: 'Cylinder', spec: { kind: 'cylinder', radius: 10, height: 20, segments: 64 } },
   { label: 'Sphere', spec: { kind: 'sphere', radius: 12, segments: 64 } },
   { label: 'Cone', spec: { kind: 'cone', radius: 10, height: 20, segments: 64 } },
@@ -40,7 +40,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   const primitives = group()
   for (const { label, spec } of PRIMITIVES) {
     button(primitives, label, async () => {
-      doc.add(label, await csg.primitive(spec), true)
+      doc.add(label, await csg.primitive(spec), spec)
       doc.commit()
     })
   }
@@ -77,6 +77,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
 
   window.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLInputElement) return
     const key = e.key.toLowerCase()
     if (e.ctrlKey || e.metaKey) {
       if (key === 'z' && !e.shiftKey) doc.undo()

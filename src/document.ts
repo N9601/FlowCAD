@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { TransformControls } from 'three/addons/controls/TransformControls.js'
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
-import type { PlacedSolid, SolidData } from './csg/protocol'
+import type { PlacedSolid, PrimitiveSpec, SolidData } from './csg/protocol'
 import type { Viewport } from './viewport'
 
 const CREASE_ANGLE = THREE.MathUtils.degToRad(35)
@@ -15,13 +15,27 @@ export interface SceneObject {
   id: number
   name: string
   solid: SolidData
+  /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
+  spec?: PrimitiveSpec
   mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
 }
 
 /** Solids are immutable once added, so snapshots share them by reference. */
-type Snapshot = { id: number; name: string; solid: SolidData; matrix: THREE.Matrix4 }[]
+type Snapshot = { id: number; name: string; solid: SolidData; spec?: PrimitiveSpec; matrix: THREE.Matrix4 }[]
 
 const geometryCache = new WeakMap<SolidData, THREE.BufferGeometry>()
+
+/** Shifts the vertices so the bounding-box centre is the origin; returns the old centre and the box. */
+function recentre(solid: SolidData) {
+  const box = new THREE.Box3().setFromArray(solid.positions)
+  const centre = box.getCenter(new THREE.Vector3())
+  for (let i = 0; i < solid.positions.length; i += 3) {
+    solid.positions[i] -= centre.x
+    solid.positions[i + 1] -= centre.y
+    solid.positions[i + 2] -= centre.z
+  }
+  return { box, centre }
+}
 
 function displayGeometry(solid: SolidData): THREE.BufferGeometry {
   const cached = geometryCache.get(solid)
@@ -62,35 +76,48 @@ export class CadDocument extends EventTarget {
       if (e.value) dragStart.copy(mesh.matrix)
       else if (!dragStart.equals(mesh.matrix)) this.commit()
     })
+    this.gizmo.addEventListener('objectChange', () => this.dispatchEvent(new Event('transform')))
     view.scene.add(this.gizmo.getHelper())
 
     this.bindPicking(view.renderer.domElement)
   }
 
   /** Adds a solid whose vertices are in world space; the pivot is moved to its bounding-box centre. */
-  add(name: string, solid: SolidData, restOnGround = false): SceneObject {
-    const box = new THREE.Box3().setFromArray(solid.positions)
-    const centre = box.getCenter(new THREE.Vector3())
-    for (let i = 0; i < solid.positions.length; i += 3) {
-      solid.positions[i] -= centre.x
-      solid.positions[i + 1] -= centre.y
-      solid.positions[i + 2] -= centre.z
-    }
-
-    if (restOnGround) centre.z = (box.max.z - box.min.z) / 2
+  add(name: string, solid: SolidData, spec?: PrimitiveSpec): SceneObject {
+    const { box, centre } = recentre(solid)
+    if (spec) centre.z = (box.max.z - box.min.z) / 2
     const id = this.nextId++
-    const obj = this.insert(id, `${name} ${id}`, solid, new THREE.Matrix4().setPosition(centre))
+    const obj = this.insert(id, `${name} ${id}`, solid, new THREE.Matrix4().setPosition(centre), spec)
     this.select([obj])
     return obj
   }
 
-  private insert(id: number, name: string, solid: SolidData, matrix: THREE.Matrix4): SceneObject {
+  /** Swaps in regenerated geometry, keeping the object's transform. */
+  replaceSolid(obj: SceneObject, solid: SolidData, spec: PrimitiveSpec) {
+    recentre(solid)
+    const bottom = (o: SceneObject) => new THREE.Box3().setFromObject(o.mesh).min.z
+    const before = bottom(obj)
+    obj.mesh.geometry.dispose()
+    obj.solid = solid
+    obj.spec = spec
+    obj.mesh.geometry = displayGeometry(solid)
+    obj.mesh.position.z += before - bottom(obj)
+    this.commit()
+  }
+
+  private insert(
+    id: number,
+    name: string,
+    solid: SolidData,
+    matrix: THREE.Matrix4,
+    spec?: PrimitiveSpec,
+  ): SceneObject {
     const mesh = new THREE.Mesh(
       displayGeometry(solid),
       new THREE.MeshStandardMaterial({ color: COLOR, roughness: 0.55, metalness: 0.1 }),
     )
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
-    const obj: SceneObject = { id, name, solid, mesh }
+    const obj: SceneObject = { id, name, solid, spec, mesh }
     this.objects.push(obj)
     this.view.scene.add(mesh)
     return obj
@@ -128,7 +155,7 @@ export class CadDocument extends EventTarget {
   commit() {
     const snapshot: Snapshot = this.objects.map((o) => {
       o.mesh.updateMatrix()
-      return { id: o.id, name: o.name, solid: o.solid, matrix: o.mesh.matrix.clone() }
+      return { id: o.id, name: o.name, solid: o.solid, spec: o.spec, matrix: o.mesh.matrix.clone() }
     })
     this.history.length = this.cursor + 1
     this.history.push(snapshot)
@@ -155,7 +182,7 @@ export class CadDocument extends EventTarget {
 
   private restore(snapshot: Snapshot) {
     this.remove([...this.objects])
-    for (const s of snapshot) this.insert(s.id, s.name, s.solid, s.matrix)
+    for (const s of snapshot) this.insert(s.id, s.name, s.solid, s.matrix, s.spec)
     this.select([])
   }
 

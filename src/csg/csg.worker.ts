@@ -14,7 +14,7 @@ type Wasm = Awaited<typeof ready>
 function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
   switch (spec.kind) {
     case 'cube':
-      return wasm.Manifold.cube(spec.size, true)
+      return wasm.Manifold.cube([spec.x, spec.y, spec.z], true)
     case 'cylinder':
       return wasm.Manifold.cylinder(spec.height, spec.radius, spec.radius, spec.segments, true)
     case 'sphere':
