@@ -10,6 +10,7 @@ const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
   { label: 'Cone', spec: { kind: 'cone', radius: 10, height: 20, segments: 64 } },
   { label: 'Tube', spec: { kind: 'tube', outerRadius: 10, innerRadius: 7, height: 20, segments: 64 } },
   { label: 'Torus', spec: { kind: 'torus', majorRadius: 14, minorRadius: 4, segments: 64 } },
+  { label: 'Gear', spec: { kind: 'gear', module: 2, teeth: 20, pressureAngle: 20, thickness: 8, bore: 8 } },
 ]
 
 const BOOLEANS: { label: string; op: BooleanOp }[] = [

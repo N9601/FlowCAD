@@ -8,10 +8,12 @@ interface Field {
   label: string
   min: number
   step: number
+  max?: number
+  integer?: boolean
 }
 
 const mm = (key: string, label: string): Field => ({ key, label, min: 0.1, step: 1 })
-const SEGMENTS: Field = { key: 'segments', label: 'Segments', min: 3, step: 1 }
+const SEGMENTS: Field = { key: 'segments', label: 'Segments', min: 3, max: 256, step: 1, integer: true }
 
 const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   cube: [mm('x', 'Width X'), mm('y', 'Depth Y'), mm('z', 'Height Z')],
@@ -20,9 +22,14 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   cone: [mm('radius', 'Radius'), mm('height', 'Height'), SEGMENTS],
   tube: [mm('outerRadius', 'Outer radius'), mm('innerRadius', 'Inner radius'), mm('height', 'Height'), SEGMENTS],
   torus: [mm('majorRadius', 'Major radius'), mm('minorRadius', 'Tube radius'), SEGMENTS],
+  gear: [
+    { key: 'module', label: 'Module', min: 0.2, step: 0.5 },
+    { key: 'teeth', label: 'Teeth', min: 6, max: 200, step: 1, integer: true },
+    { key: 'pressureAngle', label: 'Pressure angle', min: 14.5, max: 25, step: 0.5 },
+    mm('thickness', 'Thickness'),
+    { key: 'bore', label: 'Bore diameter', min: 0, step: 1 },
+  ],
 }
-
-const MAX_SEGMENTS = 256
 
 function checkSpec(spec: PrimitiveSpec) {
   if (spec.kind === 'tube' && spec.innerRadius >= spec.outerRadius) {
@@ -30,6 +37,9 @@ function checkSpec(spec: PrimitiveSpec) {
   }
   if (spec.kind === 'torus' && spec.minorRadius >= spec.majorRadius) {
     throw new Error('Tube radius must be smaller than major radius')
+  }
+  if (spec.kind === 'gear' && spec.bore >= spec.module * (spec.teeth - 2.5)) {
+    throw new Error('Bore must be smaller than the root diameter')
   }
 }
 
@@ -119,8 +129,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     const values = spec as unknown as Record<string, number>
     for (const field of FIELDS[spec.kind]) {
       numberRow(props, field.label, values[field.key], field, async (v) => {
-        const isSegments = field.key === 'segments'
-        const value = isSegments ? Math.min(MAX_SEGMENTS, Math.max(field.min, Math.round(v))) : Math.max(field.min, v)
+        const value = Math.min(field.max ?? Infinity, Math.max(field.min, field.integer ? Math.round(v) : v))
         const next = { ...spec, [field.key]: value } as PrimitiveSpec
         checkSpec(next)
         doc.replaceSolid(obj, await csg.primitive(next), next)

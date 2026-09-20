@@ -2,6 +2,7 @@
 import Module from 'manifold-3d'
 import type { Manifold, Mat4 } from 'manifold-3d'
 import wasmUrl from 'manifold-3d/manifold.wasm?url'
+import { gearProfile } from './gear'
 import type { CsgRequest, CsgResponse, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
 
 const ready = Module({ locateFile: () => wasmUrl }).then((wasm) => {
@@ -36,6 +37,16 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       circle.delete()
       profile.delete()
       return torus
+    }
+    case 'gear': {
+      const outline = new wasm.CrossSection([gearProfile(spec)], 'Positive')
+      const hole = wasm.CrossSection.circle(spec.bore / 2, 48)
+      const profile = spec.bore > 0 ? outline.subtract(hole) : outline
+      const gear = wasm.Manifold.extrude(profile, spec.thickness, 0, 0, [1, 1], true)
+      outline.delete()
+      hole.delete()
+      if (profile !== outline) profile.delete()
+      return gear
     }
   }
 }
