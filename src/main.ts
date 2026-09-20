@@ -16,7 +16,8 @@ import { buildHelp } from './help'
 import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
 import { buildSectionView } from './section'
-import { autosave } from './storage'
+import { buildHistoryPanel } from './history-panel'
+import { autosave, snapshots } from './storage'
 import { buildToolbar } from './toolbar'
 import { buildToolsPanel } from './toolspanel'
 import { Viewport } from './viewport'
@@ -49,5 +50,8 @@ buildClipboard(doc, $('#statusbar'))
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
 doc.addEventListener('saved-state', () => {
-  autosave.save(doc.serialize()).catch((err) => console.warn('Autosave failed', err))
+  const data = doc.serialize()
+  autosave.save(data).catch((err) => console.warn('Autosave failed', err))
+  snapshots.record(data).catch((err) => console.warn('Snapshot failed', err))
 })
+buildHistoryPanel($('#toolbar'), doc, $('#statusbar'))
