@@ -1,4 +1,5 @@
 import './style.css'
+import { buildConsole } from './console'
 import { CadDocument, type SavedDocument } from './document'
 import { buildPalette } from './palette'
 import { buildPanel } from './panel'
@@ -8,9 +9,10 @@ import { Viewport } from './viewport'
 
 const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!
 
-const view = new Viewport($('#viewport'))
+const view = new Viewport($('#scene'))
 const doc = new CadDocument(view)
 buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
+buildConsole($('#toolbar'), $('#viewport'), doc, view)
 buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
 

@@ -71,7 +71,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   }
 
   window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return
     const key = e.key.toLowerCase()
     if (e.ctrlKey || e.metaKey) {
       if (key === 'z' && !e.shiftKey) doc.undo()
