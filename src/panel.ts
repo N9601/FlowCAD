@@ -43,6 +43,7 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   dome: [mm('radius', 'Radius'), SEGMENTS],
   capsule: [mm('radius', 'Radius'), mm('length', 'Overall length'), SEGMENTS],
   pulley: [mm('diameter', 'Outer diameter'), mm('width', 'Width'), mm('grooveDepth', 'Groove depth'), { key: 'bore', label: 'Bore diameter', min: 0, step: 1 }],
+  text: [mm('letterHeight', 'Letter height'), mm('thickness', 'Thickness')],
   bolt: [METRIC, mm('length', 'Shank length')],
   nut: [METRIC, { key: 'clearance', label: 'Thread clearance', min: 0, max: 1, step: 0.05 }],
   rod: [METRIC, mm('length', 'Length')],
@@ -71,6 +72,9 @@ function checkSpec(spec: PrimitiveSpec) {
   if (spec.kind === 'pulley') {
     if (grooveOpening(spec.width, spec.grooveDepth) >= spec.width) throw new Error('Groove is too deep for this width')
     if (spec.bore / 2 >= spec.diameter / 2 - spec.grooveDepth) throw new Error('Bore must be smaller than the groove diameter')
+  }
+  if (spec.kind === 'text' && (spec.text.trim() === '' || spec.text.length > 60)) {
+    throw new Error('Text must be 1 to 60 characters')
   }
   if ((spec.kind === 'bolt' || spec.kind === 'rod') && spec.length > 200) {
     throw new Error('Length is limited to 200 mm')
@@ -224,6 +228,22 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
 
   const specRows = (title: string, spec: PrimitiveSpec, apply: (next: PrimitiveSpec) => Promise<void>) => {
     props.appendChild(el('h3', undefined, title))
+    if (spec.kind === 'text') {
+      const row = props.appendChild(el('label', 'row'))
+      row.appendChild(el('span', undefined, 'Text'))
+      const input = row.appendChild(el('input'))
+      input.value = spec.text
+      input.addEventListener('change', async () => {
+        try {
+          const next = { ...spec, text: input.value }
+          checkSpec(next)
+          await apply(next)
+        } catch (err) {
+          status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+          input.value = spec.text
+        }
+      })
+    }
     const values = spec as unknown as Record<string, number>
     for (const field of FIELDS[spec.kind]) {
       numberRow(props, field.label, values[field.key], field, async (v) => {

@@ -27,6 +27,7 @@ const CATEGORIES: { title: string; shapes: Shape[] }[] = [
       { label: 'Wedge', spec: { kind: 'wedge', x: 30, y: 20, z: 15 } },
       { label: 'Round box', spec: { kind: 'roundedBox', x: 30, y: 20, z: 12, radius: 3, segments: 32 } },
       { label: 'Dome', spec: { kind: 'dome', radius: 12, segments: 64 } },
+      { label: 'Text', spec: { kind: 'text', text: 'FlowCAD', letterHeight: 10, thickness: 3 } },
       { label: 'Capsule', spec: { kind: 'capsule', radius: 6, length: 30, segments: 48 } },
     ],
   },

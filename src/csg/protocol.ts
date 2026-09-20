@@ -18,6 +18,7 @@ export type PrimitiveSpec =
   | { kind: 'dome'; radius: number; segments: number }
   | { kind: 'capsule'; radius: number; length: number; segments: number }
   | { kind: 'pulley'; diameter: number; width: number; grooveDepth: number; bore: number }
+  | { kind: 'text'; text: string; letterHeight: number; thickness: number }
   | { kind: 'bolt'; size: number; length: number }
   | { kind: 'nut'; size: number; clearance: number }
   | { kind: 'rod'; size: number; length: number }

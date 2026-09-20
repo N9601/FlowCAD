@@ -2,8 +2,11 @@
 import Module from 'manifold-3d'
 import type { Manifold, Mat4 } from 'manifold-3d'
 import wasmUrl from 'manifold-3d/manifold.wasm?url'
+import { parse, type Font } from 'opentype.js'
+import fontUrl from '@fontsource/roboto/files/roboto-latin-700-normal.woff?url'
 import { gearProfile } from './gear'
 import { capsule, dome, polygonSolid, pulley, roundedBox, wedge } from './shapes'
+import { textContours } from './text'
 import { bolt, nut, rod } from './thread'
 import type { CsgNode, CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveSpec, SolidData } from './protocol'
 
@@ -13,6 +16,11 @@ const ready = Module({ locateFile: () => wasmUrl }).then((wasm) => {
 })
 
 type Wasm = Awaited<typeof ready>
+
+let font: Font
+const fontReady = fetch(fontUrl)
+  .then((res) => res.arrayBuffer())
+  .then((data) => (font = parse(data)))
 
 function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
   switch (spec.kind) {
@@ -54,6 +62,14 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       return capsule(wasm, spec.radius, spec.length, spec.segments)
     case 'pulley':
       return pulley(wasm, spec.diameter, spec.width, spec.grooveDepth, spec.bore)
+    case 'text': {
+      const contours = textContours(font, spec.text, spec.letterHeight)
+      if (contours.length === 0) throw new Error('Text has no printable characters in this font')
+      const outline = new wasm.CrossSection(contours, 'EvenOdd')
+      const solid = wasm.Manifold.extrude(outline, spec.thickness)
+      outline.delete()
+      return solid
+    }
     case 'bolt':
       return bolt(wasm, spec.size, spec.length)
     case 'nut':
@@ -175,6 +191,7 @@ self.onmessage = async (e: MessageEvent<{ id: number; req: CsgRequest }>) => {
   const { id, req } = e.data
   let res: CsgResponse
   try {
+    await fontReady
     res = { id, ok: true, result: run(await ready, req) }
   } catch (err) {
     res = { id, ok: false, error: err instanceof Error ? err.message : String(err) }
