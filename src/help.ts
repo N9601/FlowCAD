@@ -1,5 +1,6 @@
 const SHORTCUTS: [string, string][] = [
   ['?', 'Show or hide this help'],
+  ['Ctrl+K', 'Open the command palette'],
   ['W / E / R', 'Move / Rotate / Scale gizmo'],
   ['1 / 2 / 3 / 4', 'Front / Right / Top / Iso view'],
   ['F', 'Fit selection (or everything) in view'],
