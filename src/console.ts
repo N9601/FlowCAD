@@ -1,5 +1,5 @@
 import type { CadDocument } from './document'
-import { runScript, STARTER_SCRIPT } from './script'
+import { runScript, SHOWCASE_SCRIPT, STARTER_SCRIPT } from './script'
 import type { Viewport } from './viewport'
 
 const STORAGE_KEY = 'flowcad.script'
@@ -14,6 +14,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   header.appendChild(el('strong', { textContent: 'Script' }))
   const run = header.appendChild(el('button', { textContent: 'Run (Ctrl+Enter)' }))
   const reset = header.appendChild(el('button', { textContent: 'Load example' }))
+  const showcase = header.appendChild(el('button', { textContent: 'Load showcase' }))
   const close = header.appendChild(el('button', { textContent: 'Close' }))
 
   const editor = drawer.appendChild(el('textarea', { spellcheck: false }))
@@ -30,6 +31,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   toggle.addEventListener('click', () => setOpen(Boolean(drawer.hidden)))
   close.addEventListener('click', () => setOpen(false))
   reset.addEventListener('click', () => (editor.value = STARTER_SCRIPT))
+  showcase.addEventListener('click', () => (editor.value = SHOWCASE_SCRIPT))
 
   const execute = async () => {
     localStorage.setItem(STORAGE_KEY, editor.value)

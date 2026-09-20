@@ -119,3 +119,53 @@ export async function runScript(code: string, doc: CadDocument, view: Viewport, 
     doc.commit()
   }
 }
+
+
+/** Complex scene built from every kind of shape and boolean; used by the console's Showcase button. */
+export const SHOWCASE_SCRIPT = `// FlowCAD showcase: planetary gear plinth
+clear()
+
+// Rounded plinth with 4 counterbored bolt holes and an engraved rim
+const plinth = await roundedBox({ x: 180, y: 180, z: 12, radius: 5 })
+const holes = []
+for (let i = 0; i < 4; i++) {
+  const a = Math.PI / 4 + i * Math.PI / 2
+  const x = Math.cos(a) * 78, y = Math.sin(a) * 78
+  holes.push((await cylinder({ radius: 3.5, height: 30, segments: 32 })).at(x, y, 6))
+  holes.push((await cylinder({ radius: 6, height: 5, segments: 32 })).at(x, y, 11))
+}
+const label = (await text({ text: 'FLOWCAD', letterHeight: 8, thickness: 3 })).at(0, -74, 12).rotate(0, 0, 180)
+;(await subtract(plinth, ...holes, label)).name('Plinth')
+
+// Ring gear: a large spur gear with its centre cored out
+const ringBlank = await gear({ module: 2, teeth: 60, thickness: 10, bore: 0 })
+const ringBore = (await cylinder({ radius: 54, height: 20, segments: 128 })).at(0, 0, 5)
+;(await subtract(ringBlank, ringBore)).at(0, 0, 15).name('Ring gear')
+
+// Sun gear with hub and domed cap
+;(await gear({ module: 2, teeth: 22, thickness: 10, bore: 8 })).at(0, 0, 15).name('Sun gear')
+;(await cylinder({ radius: 12, height: 4, segments: 48 })).at(0, 0, 22).name('Sun hub')
+;(await dome({ radius: 10, segments: 48 })).at(0, 0, 24).name('Cap')
+
+// Three planet gears at 120 degrees
+for (let i = 0; i < 3; i++) {
+  const a = i * 2 * Math.PI / 3
+  ;(await gear({ module: 2, teeth: 20, thickness: 10, bore: 5 })).at(Math.cos(a) * 44, Math.sin(a) * 44, 15).name('Planet ' + (i + 1))
+}
+
+// M8 bolts in the corner counterbores
+for (let i = 0; i < 4; i++) {
+  const a = Math.PI / 4 + i * Math.PI / 2
+  ;(await bolt({ size: 8, length: 18 })).at(Math.cos(a) * 78, Math.sin(a) * 78, 12).name('Bolt ' + (i + 1))
+}
+
+// Belt pulley on a threaded shaft along the front edge
+;(await pulley({ diameter: 32, width: 14, grooveDepth: 5, bore: 6 })).at(78, -60, 6).rotate(90, 0, 0).name('Pulley')
+;(await rod({ size: 8, length: 60 })).at(78, -60, 6).rotate(90, 0, 0).name('Shaft')
+
+// Twisted star spire as an ornamental accent
+const star = '10,0 4,3 8,10 0,4 -8,10 -4,3 -10,0 -4,-3 -8,-10 0,-4 8,-10 4,-3'
+;(await extrude({ profile: star, height: 60, twist: 180 })).at(-78, -60, 30).name('Spire')
+
+fit()
+`
