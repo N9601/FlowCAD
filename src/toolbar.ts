@@ -38,6 +38,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   for (const { label, spec } of PRIMITIVES) {
     button(primitives, label, async () => {
       doc.add(label, await csg.primitive(spec), true)
+      doc.commit()
     })
   }
 
@@ -51,13 +52,40 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
         const solid = await csg.boolean(op, doc.placed(a), doc.placed(b))
         doc.remove([a, b])
         doc.add(label, solid)
+        doc.commit()
         status.textContent = `${label} done in ${(performance.now() - started).toFixed(0)} ms`
       }),
     )
   }
 
   const edit = group()
-  needsOne.push(button(edit, 'Delete', () => doc.remove([...doc.selection])))
+  const deleteSelection = () => {
+    if (doc.selection.length === 0) return
+    doc.remove([...doc.selection])
+    doc.commit()
+  }
+  const undo = button(edit, 'Undo', () => doc.undo())
+  const redo = button(edit, 'Redo', () => doc.redo())
+  needsOne.push(button(edit, 'Delete', deleteSelection))
+
+  const gizmo = group()
+  button(gizmo, 'Move (W)', () => doc.setGizmoMode('translate'))
+  button(gizmo, 'Rotate (E)', () => doc.setGizmoMode('rotate'))
+  button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
+
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase()
+    if (e.ctrlKey || e.metaKey) {
+      if (key === 'z' && !e.shiftKey) doc.undo()
+      else if (key === 'y' || (key === 'z' && e.shiftKey)) doc.redo()
+      else return
+      e.preventDefault()
+    } else if (key === 'delete' || key === 'backspace') deleteSelection()
+    else if (key === 'escape') doc.select([])
+    else if (key === 'w') doc.setGizmoMode('translate')
+    else if (key === 'e') doc.setGizmoMode('rotate')
+    else if (key === 'r') doc.setGizmoMode('scale')
+  })
 
   const file = group()
   needsAny.push(
@@ -73,6 +101,8 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     for (const b of needsTwo) b.disabled = n !== 2
     for (const b of needsOne) b.disabled = n === 0
     for (const b of needsAny) b.disabled = doc.objects.length === 0
+    undo.disabled = !doc.canUndo
+    redo.disabled = !doc.canRedo
     status.textContent =
       n === 0
         ? 'Click an object to select. Shift-click a second one to combine them.'
