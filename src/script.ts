@@ -1,5 +1,6 @@
 import { MathUtils } from 'three'
 import { addShape, combine } from './actions'
+import { dropToBed, mirror, type Axis } from './arrange'
 import { CATEGORIES } from './catalog'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument, SceneObject } from './document'
@@ -8,9 +9,29 @@ import type { Viewport } from './viewport'
 /** Handle a script holds on to. Transform calls chain: `cube().at(10, 0, 0).rotate(0, 0, 45)`. */
 class Part {
   readonly object: SceneObject
+  private readonly doc: CadDocument
 
-  constructor(object: SceneObject) {
+  constructor(object: SceneObject, doc: CadDocument) {
     this.object = object
+    this.doc = doc
+  }
+
+  /** Independent copy in the same place; move it afterwards. */
+  clone() {
+    this.object.mesh.updateMatrix()
+    return new Part(this.doc.cloneAt(this.object, this.object.mesh.matrix.clone()), this.doc)
+  }
+
+  mirror(axis: Axis) {
+    if (!['x', 'y', 'z'].includes(axis)) throw new Error("mirror() takes 'x', 'y' or 'z'")
+    mirror([this.object], axis)
+    return this
+  }
+
+  /** Rests the part on the bed (Z = 0). */
+  drop() {
+    dropToBed([this.object])
+    return this
   }
 
   /** Absolute position of the part's centre, in mm. */
@@ -46,7 +67,7 @@ class Part {
 
 export const STARTER_SCRIPT = `// Every shape takes an object of dimensions in mm; anything left out uses the default.
 // Shapes: ${CATEGORIES.flatMap((c) => c.shapes.map((s) => s.spec.kind)).join(', ')}
-// Parts:  .at(x,y,z)  .move(dx,dy,dz)  .rotate(x,y,z)  .scale(f)  .name('...')
+// Parts:  .at(x,y,z)  .move(dx,dy,dz)  .rotate(x,y,z)  .scale(f)  .mirror('x')  .drop()  .clone()  .name('...')
 // Also:   union(a, b, ...)  subtract(target, ...tools)  intersect(a, b, ...)  clear()  fit()  print(...)
 
 clear()
@@ -78,7 +99,7 @@ export async function runScript(code: string, doc: CadDocument, view: Viewport, 
       if (unknown.length > 0) {
         throw new Error(`${spec.kind}() has no "${unknown[0]}". Options: ${Object.keys(spec).filter((k) => k !== 'kind').join(', ')}`)
       }
-      return new Part(await addShape(doc, label, { ...spec, ...dimensions, kind: spec.kind } as PrimitiveSpec))
+      return new Part(await addShape(doc, label, { ...spec, ...dimensions, kind: spec.kind } as PrimitiveSpec), doc)
     }
   }
 
@@ -86,7 +107,7 @@ export async function runScript(code: string, doc: CadDocument, view: Viewport, 
     scope[op] = async (...parts: Part[]) => {
       if (parts.some((p) => !(p instanceof Part))) throw new Error(`${op}() takes parts. Did you forget "await" when creating one?`)
       if (parts.some((p) => !doc.objects.includes(p.object))) throw new Error(`${op}() was given a part that is already used up`)
-      return new Part(await combine(doc, op, parts.map((p) => p.object)))
+      return new Part(await combine(doc, op, parts.map((p) => p.object)), doc)
     }
   }
 
