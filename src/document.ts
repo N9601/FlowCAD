@@ -381,6 +381,14 @@ export class CadDocument extends EventTarget {
     marquee.hidden = true
     dom.parentElement!.appendChild(marquee)
     let boxing = false
+    let hovered: SceneObject | undefined
+    const clearHover = () => {
+      if (!hovered) return
+      const rank = this.selection.indexOf(hovered)
+      hovered.mesh.material.color.setHex(rank === -1 ? hovered.color : rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
+      hovered.mesh.material.emissive.setHex(0)
+      hovered = undefined
+    }
 
     dom.addEventListener('pointerdown', (e) => {
       down.set(e.clientX, e.clientY)
@@ -389,14 +397,29 @@ export class CadDocument extends EventTarget {
       if (boxing) this.view.controls.enabled = false
     })
     dom.addEventListener('pointermove', (e) => {
-      if (!boxing) return
+      if (boxing) {
+        const rect = dom.getBoundingClientRect()
+        marquee.hidden = down.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) <= CLICK_SLOP_PX
+        marquee.style.left = `${Math.min(down.x, e.clientX) - rect.left}px`
+        marquee.style.top = `${Math.min(down.y, e.clientY) - rect.top}px`
+        marquee.style.width = `${Math.abs(e.clientX - down.x)}px`
+        marquee.style.height = `${Math.abs(e.clientY - down.y)}px`
+        return
+      }
+      if (!this.pickingEnabled || this.gizmo.axis) return
       const rect = dom.getBoundingClientRect()
-      marquee.hidden = down.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) <= CLICK_SLOP_PX
-      marquee.style.left = `${Math.min(down.x, e.clientX) - rect.left}px`
-      marquee.style.top = `${Math.min(down.y, e.clientY) - rect.top}px`
-      marquee.style.width = `${Math.abs(e.clientX - down.x)}px`
-      marquee.style.height = `${Math.abs(e.clientY - down.y)}px`
+      const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1)
+      raycaster.setFromCamera(ndc, this.view.camera)
+      const hit = raycaster.intersectObjects(this.objects.map((o) => o.mesh), false)[0]
+      const obj = hit && this.objects.find((o) => o.mesh === hit.object)
+      if (obj === hovered) return
+      clearHover()
+      if (obj) {
+        hovered = obj
+        obj.mesh.material.emissive.setHex(0x223344)
+      }
     })
+    dom.addEventListener('pointerleave', clearHover)
     dom.addEventListener('pointerup', (e) => {
       if (boxing) {
         boxing = false
