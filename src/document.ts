@@ -102,7 +102,8 @@ export class CadDocument extends EventTarget {
   /** Adds a solid whose vertices are in world space; the pivot is moved to its bounding-box centre. */
   add(name: string, solid: SolidData, spec?: PrimitiveSpec): SceneObject {
     const { box, centre } = recentre(solid)
-    if (spec) centre.z = (box.max.z - box.min.z) / 2
+    // New primitives are dropped on the origin, resting on the ground plane.
+    if (spec) centre.set(0, 0, (box.max.z - box.min.z) / 2)
     const id = this.nextId++
     const obj = this.insert({ id, name: `${name} ${id}`, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
     this.select([obj])
