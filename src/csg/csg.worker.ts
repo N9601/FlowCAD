@@ -108,16 +108,14 @@ function run(wasm: Wasm, req: CsgRequest): SolidData {
     }
   }
 
-  const a = place(wasm, req.a)
-  const b = place(wasm, req.b)
-  const result =
-    req.op === 'union' ? wasm.Manifold.union(a, b) : req.op === 'subtract' ? a.subtract(b) : a.intersect(b)
+  const parts = req.parts.map((p) => place(wasm, p))
+  const combine = { union: wasm.Manifold.union, subtract: wasm.Manifold.difference, intersect: wasm.Manifold.intersection }
+  const result = combine[req.op](parts)
   try {
     if (result.isEmpty()) throw new Error(`${req.op} produced an empty solid`)
     return toSolid(result)
   } finally {
-    a.delete()
-    b.delete()
+    for (const p of parts) p.delete()
     result.delete()
   }
 }

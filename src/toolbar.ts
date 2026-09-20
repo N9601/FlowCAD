@@ -54,11 +54,11 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   for (const { label, op } of BOOLEANS) {
     needsTwo.push(
       button(booleans, label, async () => {
-        const [a, b] = doc.selection
+        const inputs = [...doc.selection]
         const started = performance.now()
         status.textContent = `${label}...`
-        const solid = await csg.boolean(op, doc.placed(a), doc.placed(b))
-        doc.remove([a, b])
+        const solid = await csg.boolean(op, inputs.map((o) => doc.placed(o)))
+        doc.remove(inputs)
         doc.add(label, solid)
         doc.commit()
         status.textContent = `${label} done in ${(performance.now() - started).toFixed(0)} ms`
@@ -153,19 +153,17 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
 
   const refresh = () => {
     const n = doc.selection.length
-    for (const b of needsTwo) b.disabled = n !== 2
+    for (const b of needsTwo) b.disabled = n < 2
     for (const b of needsOne) b.disabled = n === 0
     for (const b of needsAny) b.disabled = doc.objects.length === 0
     undo.disabled = !doc.canUndo
     redo.disabled = !doc.canRedo
     status.textContent =
       n === 0
-        ? 'Click an object to select. Shift-click a second one to combine them.'
+        ? 'Click to select, shift-click to add, or shift-drag a box. Two or more objects can be combined.'
         : n === 1
           ? `${doc.selection[0].name} selected`
-          : n === 2
-            ? `${doc.selection[0].name} (target) + ${doc.selection[1].name} (tool)`
-            : `${n} objects selected`
+          : `${doc.selection[0].name} (target) + ${n - 1} tool object${n > 2 ? 's' : ''}`
   }
   doc.addEventListener('change', refresh)
   refresh()

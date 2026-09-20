@@ -24,5 +24,5 @@ function call(req: CsgRequest): Promise<SolidData> {
 export const csg = {
   primitive: (spec: PrimitiveSpec) => call({ type: 'primitive', spec }),
   validate: (solid: SolidData) => call({ type: 'validate', solid }),
-  boolean: (op: BooleanOp, a: PlacedSolid, b: PlacedSolid) => call({ type: 'boolean', op, a, b }),
+  boolean: (op: BooleanOp, parts: PlacedSolid[]) => call({ type: 'boolean', op, parts }),
 }

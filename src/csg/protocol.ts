@@ -26,7 +26,8 @@ export interface PlacedSolid {
 
 export type CsgRequest =
   | { type: 'primitive'; spec: PrimitiveSpec }
-  | { type: 'boolean'; op: BooleanOp; a: PlacedSolid; b: PlacedSolid }
+  /** Subtract removes every later part from the first one. */
+  | { type: 'boolean'; op: BooleanOp; parts: PlacedSolid[] }
   | { type: 'validate'; solid: SolidData }
 
 export type CsgResponse =
