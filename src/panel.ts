@@ -57,6 +57,11 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
     { key: 'twist', label: 'Twist (deg)', min: -3600, max: 3600, step: 15 },
     { key: 'taper', label: 'Taper top scale', min: 0.01, max: 10, step: 0.1 },
   ],
+  loft: [
+    { key: 'bottom', label: 'Bottom x,y', min: 0, step: 1, string: true },
+    { key: 'top', label: 'Top x,y', min: 0, step: 1, string: true },
+    mm('height', 'Height'),
+  ],
   arcSphere: [
     mm('radius', 'Radius'),
     { key: 'startZ', label: 'Bottom Z (mm)', min: -1000, step: 1 },

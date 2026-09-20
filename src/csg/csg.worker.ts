@@ -71,6 +71,37 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       const taper = Math.max(0.001, spec.taper)
       return wasm.Manifold.extrude(parseProfile(spec.profile, false), spec.height, steps, spec.twist, [taper, taper], true)
     }
+    case 'loft': {
+      const bottom = parseProfile(spec.bottom, false)
+      const top = parseProfile(spec.top, false)
+      if (bottom.length !== top.length) throw new Error(`Loft profiles must have the same point count (bottom ${bottom.length}, top ${top.length})`)
+      if (spec.height <= 0) throw new Error('Loft height must be positive')
+      const n = bottom.length
+      // Interleave vertices: bottom[0..n-1] then top[0..n-1].
+      const vertProperties = new Float32Array(n * 2 * 3)
+      for (let i = 0; i < n; i++) {
+        vertProperties[i * 3] = bottom[i][0]
+        vertProperties[i * 3 + 1] = bottom[i][1]
+        vertProperties[i * 3 + 2] = 0
+        vertProperties[(n + i) * 3] = top[i][0]
+        vertProperties[(n + i) * 3 + 1] = top[i][1]
+        vertProperties[(n + i) * 3 + 2] = spec.height
+      }
+      const triangles: number[] = []
+      // Sides: two triangles per quad; wind so the normal points outward for CCW input.
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n
+        triangles.push(i, j, n + j, i, n + j, n + i)
+      }
+      // Bottom cap: fan from vertex 0 with reversed winding (outward = -Z).
+      for (let i = 1; i < n - 1; i++) triangles.push(0, i + 1, i)
+      // Top cap: fan from vertex n with normal winding (outward = +Z).
+      for (let i = 1; i < n - 1; i++) triangles.push(n, n + i, n + i + 1)
+      const mesh = new wasm.Mesh({ numProp: 3, vertProperties, triVerts: new Uint32Array(triangles) })
+      const solid = new wasm.Manifold(mesh)
+      if (solid.status() !== 'NoError') throw new Error(`Loft failed: ${solid.status()}`)
+      return solid
+    }
     case 'arcSphere': {
       const ball = wasm.Manifold.sphere(spec.radius, spec.segments)
       if (spec.startZ <= -spec.radius && spec.endZ >= spec.radius) return ball
