@@ -323,3 +323,111 @@ const stamp = (await text({ text: 'FLOWCAD MK-II', letterHeight: 5, thickness: 1
 
 fit()
 `
+
+
+/** NYC skyline showcase: Manhattan with iconic landmarks. */
+export const SHOWCASE_NYC_SCRIPT = `clear()
+
+// ================= Water and Manhattan =================
+;(await cube({ x: 320, y: 440, z: 1 })).at(0, 0, 0.5).color('#20334a').name('Water')
+
+const island = await roundedBox({ x: 90, y: 340, z: 4, radius: 1.5 })
+const label = (await text({ text: 'NEW YORK CITY', letterHeight: 8, thickness: 3 })).at(0, -155, 4)
+const manhattan = await subtract(island, label)
+manhattan.name('Manhattan').color('#4a4640').drop()
+manhattan.move(0, 0, 1) // sit on top of the water
+
+// ================= Central Park (north-central) =================
+;(await cube({ x: 55, y: 130, z: 0.6 })).at(0, 40, 5.3).color('#3f6b3a').name('Central Park')
+;(await cylinder({ radius: 8, height: 0.8, segments: 32 })).at(-6, 70, 5.4).color('#385c7a').name('Reservoir')
+
+for (let i = 0; i < 30; i++) {
+  const x = -24 + Math.random() * 48
+  const y = -20 + Math.random() * 120
+  const h = 4 + Math.random() * 5
+  ;(await cone({ radius: 1.5 + Math.random() * 0.8, height: h, segments: 8 })).at(x, y, 5 + h / 2).color('#2d5a35').name('Tree ' + i)
+}
+
+// ================= Empire State Building (midtown, south of park) =================
+;(await cube({ x: 22, y: 22, z: 90 })).at(-18, -55, 50).color('#b0a58f').name('Empire base')
+;(await cube({ x: 16, y: 16, z: 45 })).at(-18, -55, 117).color('#b0a58f').name('Empire mid')
+;(await cube({ x: 10, y: 10, z: 20 })).at(-18, -55, 150).color('#b0a58f').name('Empire crown')
+;(await cone({ radius: 5, height: 20, segments: 24 })).at(-18, -55, 170).color('#c9cbd0').name('Empire mast')
+;(await cylinder({ radius: 0.6, height: 30, segments: 8 })).at(-18, -55, 195).color('#333333').name('Empire antenna')
+
+// ================= Chrysler Building (midtown east) =================
+;(await cube({ x: 16, y: 16, z: 90 })).at(18, -25, 50).color('#8f8272').name('Chrysler base')
+// Stepped art-deco crown
+;(await cube({ x: 14, y: 14, z: 10 })).at(18, -25, 100).color('#a89f8c').name('Chrysler step 1')
+;(await cube({ x: 12, y: 12, z: 8 })).at(18, -25, 109).color('#a89f8c').name('Chrysler step 2')
+;(await extrude({ profile: '-6,0 6,0 4,12 0,16 -4,12', height: 12 })).at(18, -25, 121).rotate(90, 0, 0).color('#c9d0d6').name('Chrysler dome')
+;(await cone({ radius: 2, height: 18, segments: 24 })).at(18, -25, 135).color('#c9d0d6').name('Chrysler spire')
+
+// ================= One World Trade Center (downtown, tall glass tower) =================
+;(await extrude({ profile: '-13,-13 13,-13 13,13 -13,13', height: 140, twist: 45, taper: 0.55 })).at(-15, -130, 75).color('#5a7284').name('One WTC')
+;(await cylinder({ radius: 1, height: 40, segments: 12 })).at(-15, -130, 165).color('#555555').name('WTC antenna')
+
+// ================= Flatiron Building =================
+;(await extrude({ profile: '-8,-3 8,-3 0,22', height: 40 })).at(20, -85, 25).color('#8a5f3a').name('Flatiron')
+
+// ================= Rockefeller Center (three uniform slabs) =================
+for (let i = 0; i < 3; i++) {
+  ;(await cube({ x: 6, y: 22, z: 65 + i * 6 })).at(4 + i * 8, -30, 5 + (65 + i * 6) / 2).color('#7a6d5c').name('Rockefeller ' + (i + 1))
+}
+
+// ================= Uptown residential blocks (north of park) =================
+for (let i = 0; i < 12; i++) {
+  const col = i % 4
+  const row = Math.floor(i / 4)
+  const x = -30 + col * 20
+  const y = 130 + row * 25
+  const h = 25 + Math.random() * 35
+  const shades = ['#65727f', '#6d6a5f', '#807265', '#5a687a']
+  ;(await cube({ x: 14, y: 14, z: h })).at(x, y, 5 + h / 2).color(shades[i % 4]).name('Uptown ' + (i + 1))
+}
+
+// ================= Downtown skyscraper cluster =================
+for (let i = 0; i < 10; i++) {
+  const col = i % 5
+  const row = Math.floor(i / 5)
+  const x = -35 + col * 15
+  const y = -100 + row * 15
+  const h = 40 + Math.random() * 60
+  const shades = ['#8a929d', '#6a7a8a', '#7a6a5a', '#5a6a7a', '#8a7a6a']
+  ;(await cube({ x: 10, y: 10, z: h })).at(x, y, 5 + h / 2).color(shades[i % 5]).name('FiDi ' + (i + 1))
+}
+
+// ================= Brooklyn Bridge (east of Manhattan) =================
+;(await cube({ x: 60, y: 6, z: 3 })).at(75, -80, 15).color('#7a6b5c').name('Bridge deck')
+;(await cube({ x: 6, y: 8, z: 34 })).at(60, -80, 32).color('#a89684').name('Bridge tower W')
+;(await cube({ x: 6, y: 8, z: 34 })).at(95, -80, 32).color('#a89684').name('Bridge tower E')
+// Suspension cables sagging between the towers and out to the shores
+for (const sign of [-1, 1]) {
+  const y = -80 + sign * 3
+  const cable = \`40,\${y},15 60,\${y},46 75,\${y},22 95,\${y},46 115,\${y},15\`
+  ;(await pipe({ path: cable, radius: 0.4, segments: 8 })).color('#333333').name(\`Bridge cable \${sign > 0 ? 'N' : 'S'}\`)
+}
+
+// ================= Statue of Liberty (Liberty Island, SW) =================
+;(await cylinder({ radius: 6, height: 8, segments: 8 })).at(-70, -180, 6).color('#a89684').name('Liberty pedestal')
+;(await cylinder({ radius: 6, height: 8, segments: 16 })).at(-70, -180, 14).color('#4a8a7a').name('Liberty base')
+;(await cylinder({ radius: 3, height: 12, segments: 12 })).at(-70, -180, 24).color('#4a8a7a').name('Liberty body')
+;(await sphere({ radius: 3, segments: 16 })).at(-70, -180, 32).color('#4a8a7a').name('Liberty head')
+// Torch arm and flame
+;(await cylinder({ radius: 0.4, height: 8, segments: 6 })).at(-64, -180, 34).rotate(0, 60, 0).color('#4a8a7a').name('Liberty arm')
+;(await cone({ radius: 1.2, height: 4, segments: 12 })).at(-62, -180, 38).color('#ff9a2e').name('Liberty torch')
+
+// ================= Yellow taxis on avenues =================
+for (let i = 0; i < 8; i++) {
+  const lane = (i % 2) * 20 - 10
+  const y = -140 + Math.floor(i / 2) * 40
+  ;(await cube({ x: 4, y: 9, z: 2 })).at(lane, y, 6).color('#ffcc00').name('Cab ' + (i + 1))
+}
+
+// ================= Piers on the west side =================
+for (let i = 0; i < 4; i++) {
+  ;(await cube({ x: 15, y: 4, z: 1 })).at(-52, -60 + i * 30, 5.5).color('#6a5a4a').name('Pier ' + (i + 1))
+}
+
+fit()
+`

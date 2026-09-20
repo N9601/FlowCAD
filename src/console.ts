@@ -1,5 +1,5 @@
 import type { CadDocument } from './document'
-import { runScript, SHOWCASE_ARCH_SCRIPT, SHOWCASE_MECH_SCRIPT, SHOWCASE_SCRIPT, STARTER_SCRIPT } from './script'
+import { runScript, SHOWCASE_ARCH_SCRIPT, SHOWCASE_MECH_SCRIPT, SHOWCASE_NYC_SCRIPT, SHOWCASE_SCRIPT, STARTER_SCRIPT } from './script'
 import type { Viewport } from './viewport'
 
 const STORAGE_KEY = 'flowcad.script'
@@ -17,6 +17,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   const showcase = header.appendChild(el('button', { textContent: 'Load planetary' }))
   const arch = header.appendChild(el('button', { textContent: 'Load architecture' }))
   const mech = header.appendChild(el('button', { textContent: 'Load mechanical' }))
+  const nyc = header.appendChild(el('button', { textContent: 'Load NYC' }))
   const close = header.appendChild(el('button', { textContent: 'Close' }))
 
   const editor = drawer.appendChild(el('textarea', { spellcheck: false }))
@@ -36,6 +37,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   showcase.addEventListener('click', () => (editor.value = SHOWCASE_SCRIPT))
   arch.addEventListener('click', () => (editor.value = SHOWCASE_ARCH_SCRIPT))
   mech.addEventListener('click', () => (editor.value = SHOWCASE_MECH_SCRIPT))
+  nyc.addEventListener('click', () => (editor.value = SHOWCASE_NYC_SCRIPT))
 
   const execute = async () => {
     localStorage.setItem(STORAGE_KEY, editor.value)
