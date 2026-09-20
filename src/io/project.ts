@@ -21,6 +21,7 @@ interface SerializedObject {
   solid: SerializedSolid
   visible?: boolean
   groupId?: number
+  material?: string
   spec?: unknown
   tree?: SerializedTree
 }
@@ -96,6 +97,7 @@ export function encodeProject(objects: SavedDocument): ArrayBuffer {
       solid: packSolid(o.solid),
       visible: o.visible,
       groupId: o.groupId,
+      material: o.material,
       spec: o.spec,
       tree: o.tree ? packTree(o.tree) : undefined,
     })),
@@ -118,6 +120,7 @@ export function decodeProject(buffer: ArrayBuffer): SavedDocument {
     color: o.color ?? 0x8fa3b8,
     visible: o.visible !== false,
     groupId: o.groupId,
+    material: o.material,
     matrix: o.matrix,
     solid: unpackSolid(o.solid),
     spec: o.spec as SavedDocument[number]['spec'],

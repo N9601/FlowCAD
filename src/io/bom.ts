@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { SceneObject } from '../document'
+import { DEFAULT_MATERIAL, gramsOf } from '../materials'
 
 const csvCell = (value: string | number) => {
   const text = String(value)
@@ -8,7 +9,7 @@ const csvCell = (value: string | number) => {
 
 /** Bill of materials CSV: one row per object with name, colour, dimensions, volume (cm3), tris. */
 export function encodeBom(objects: readonly SceneObject[]): ArrayBuffer {
-  const rows = ['Name,Color,SizeX (mm),SizeY (mm),SizeZ (mm),Volume (cm3),Triangles,Group']
+  const rows = ['Name,Color,Material,SizeX (mm),SizeY (mm),SizeZ (mm),Volume (cm3),Mass (g),Triangles,Group']
   const size = new THREE.Vector3()
   for (const obj of objects) {
     obj.mesh.updateMatrixWorld()
@@ -26,10 +27,12 @@ export function encodeBom(objects: readonly SceneObject[]): ArrayBuffer {
       [
         csvCell(obj.name),
         '#' + obj.color.toString(16).padStart(6, '0'),
+        obj.material ?? DEFAULT_MATERIAL,
         csvCell(size.x.toFixed(2)),
         csvCell(size.y.toFixed(2)),
         csvCell(size.z.toFixed(2)),
         csvCell((Math.abs(volume) / 1000).toFixed(3)),
+        csvCell(gramsOf(Math.abs(volume), obj.material).toFixed(2)),
         obj.solid.indices.length / 3,
         obj.groupId ?? '',
       ].join(','),

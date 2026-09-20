@@ -21,6 +21,8 @@ export interface SceneObject {
   visible: boolean
   /** Objects sharing a groupId select and move together. */
   groupId?: number
+  /** Preset material name from src/materials.ts; drives mass calculation. */
+  material?: string
   spec?: PrimitiveSpec
   /** Present on boolean results: how to rebuild `solid`, in the object's local frame. Never mutated. */
   tree?: CsgNode
@@ -33,6 +35,7 @@ interface ObjectState {
   color: number
   visible: boolean
   groupId?: number
+  material?: string
   solid: SolidData
   spec?: PrimitiveSpec
   tree?: CsgNode
@@ -284,7 +287,7 @@ export class CadDocument extends EventTarget {
   commit() {
     const snapshot: Snapshot = this.objects.map((o) => {
       o.mesh.updateMatrix()
-      return { id: o.id, name: o.name, color: o.color, visible: o.visible, groupId: o.groupId, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
+      return { id: o.id, name: o.name, color: o.color, visible: o.visible, groupId: o.groupId, material: o.material, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
     })
     this.history.length = this.cursor + 1
     this.history.push(snapshot)
