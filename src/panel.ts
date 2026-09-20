@@ -70,7 +70,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocument) {
   const list = root.appendChild(el('section'))
   const props = root.appendChild(el('section'))
-  let positionInputs: (HTMLInputElement | HTMLSelectElement)[] = []
+  let syncTransform = () => {}
 
   const numberRow = (parent: HTMLElement, label: string, value: number, field: Partial<Field>, onChange: (v: number) => void) => {
     const row = parent.appendChild(el('label', 'row'))
@@ -112,7 +112,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
   }
 
   const renderProps = () => {
-    positionInputs = []
+    syncTransform = () => {}
     props.replaceChildren(el('h2', undefined, 'Properties'))
     if (doc.selection.length !== 1) {
       props.appendChild(el('p', 'hint', doc.selection.length === 0 ? 'Nothing selected.' : `${doc.selection.length} objects selected.`))
@@ -129,13 +129,31 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
       doc.commit()
     })
 
-    props.appendChild(el('h3', undefined, 'Position (mm)'))
-    positionInputs = (['x', 'y', 'z'] as const).map((axis) =>
-      numberRow(props, axis.toUpperCase(), obj.mesh.position[axis], { step: 1 }, (v) => {
-        obj.mesh.position[axis] = v
-        doc.commit()
-      }),
-    )
+    const axes = ['x', 'y', 'z'] as const
+    const { position, rotation, scale } = obj.mesh
+    const deg = THREE.MathUtils.radToDeg
+    const vectorRows = (title: string, read: (axis: 'x' | 'y' | 'z') => number, write: (axis: 'x' | 'y' | 'z', v: number) => void, field: Partial<Field>) => {
+      props.appendChild(el('h3', undefined, title))
+      return axes.map((axis) =>
+        numberRow(props, axis.toUpperCase(), read(axis), field, (v) => {
+          write(axis, v)
+          doc.commit()
+        }),
+      )
+    }
+    const positionInputs = vectorRows('Position (mm)', (a) => position[a], (a, v) => (position[a] = v), { step: 1 })
+    const rotationInputs = vectorRows('Rotation (deg)', (a) => deg(rotation[a]), (a, v) => (rotation[a] = THREE.MathUtils.degToRad(v)), { step: 15 })
+    const scaleInputs = vectorRows('Scale', (a) => scale[a], (a, v) => {
+      if (v <= 0) throw new Error('Scale must be greater than zero')
+      scale[a] = v
+    }, { step: 0.1, min: 0.01 })
+    syncTransform = () => {
+      axes.forEach((a, i) => {
+        positionInputs[i].value = String(+position[a].toFixed(3))
+        rotationInputs[i].value = String(+deg(rotation[a]).toFixed(3))
+        scaleInputs[i].value = String(+scale[a].toFixed(3))
+      })
+    }
 
     if (obj.spec) renderSpec(obj, obj.spec)
 
@@ -162,11 +180,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     renderList()
     renderProps()
   })
-  doc.addEventListener('transform', () => {
-    const obj = doc.selection.at(-1)
-    if (!obj || positionInputs.length !== 3) return
-    positionInputs.forEach((input, i) => (input.value = String(+obj.mesh.position.getComponent(i).toFixed(3))))
-  })
+  doc.addEventListener('transform', () => syncTransform())
   renderList()
   renderProps()
 }
