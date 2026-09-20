@@ -6,6 +6,7 @@ import type { ViewName, Viewport } from './viewport'
 import { decodeGlb, encodeGlb } from './io/gltf'
 import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
 import { decodePly, encodePly } from './io/ply'
+import { decodeProject, encodeProject } from './io/project'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
@@ -100,16 +101,21 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   )
   const importFiles = async (files: Iterable<File>) => {
     for (const f of files) {
-      const decoders: Record<string, (data: ArrayBuffer) => SolidData> = { stl: decodeStl, obj: decodeObj, glb: decodeGlb, ply: decodePly }
-      const decode = decoders[f.name.split('.').pop()!.toLowerCase()]
-      if (!decode) throw new Error(`${f.name}: only STL, OBJ, GLB and PLY files can be imported`)
+      const ext = f.name.split('.').pop()!.toLowerCase()
       status.textContent = `Importing ${f.name}...`
+      if (ext === 'flowcad') {
+        doc.load(decodeProject(await f.arrayBuffer()))
+        continue
+      }
+      const decoders: Record<string, (data: ArrayBuffer) => SolidData> = { stl: decodeStl, obj: decodeObj, glb: decodeGlb, ply: decodePly }
+      const decode = decoders[ext]
+      if (!decode) throw new Error(`${f.name}: only .flowcad, STL, OBJ, GLB and PLY files can be imported`)
       const solid = await csg.validate(decode(await f.arrayBuffer()))
       doc.add(f.name.replace(/\.[^.]+$/, ''), solid)
       doc.commit()
     }
   }
-  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.stl,.obj,.glb,.ply', multiple: true })
+  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.flowcad,.stl,.obj,.glb,.ply', multiple: true })
   picker.addEventListener('change', async () => {
     try {
       await importFiles(picker.files ?? [])
@@ -118,7 +124,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     }
     picker.value = ''
   })
-  button(file, 'Import', () => picker.click())
+  button(file, 'Open', () => picker.click())
 
   window.addEventListener('dragover', (e) => e.preventDefault())
   window.addEventListener('drop', async (e) => {
@@ -129,6 +135,12 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       status.textContent = `Error: ${err instanceof Error ? err.message : err}`
     }
   })
+  needsAny.push(
+    button(file, 'Save project', () => {
+      download(encodeProject(doc.serialize()), 'project.flowcad')
+      status.textContent = `Saved ${doc.objects.length} object(s) to project.flowcad`
+    }),
+  )
   const exporters: Record<string, (parts: NamedPart[]) => ArrayBuffer> = {
     stl: encodeBinaryStl,
     obj: encodeObj,

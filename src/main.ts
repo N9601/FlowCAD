@@ -14,6 +14,8 @@ const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!
 
 const view = new Viewport($('#scene'))
 const doc = new CadDocument(view)
+// Exposed for the browser console: `flowcad.doc.serialize()` and similar.
+;(window as unknown as { flowcad: { doc: CadDocument; view: Viewport } }).flowcad = { doc, view }
 buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildConsole($('#toolbar'), $('#viewport'), doc, view)
 buildMeasure($('#toolbar'), view, doc, $('#statusbar'))
