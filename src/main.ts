@@ -8,6 +8,7 @@ import { buildContextMenu } from './contextmenu'
 import { buildCommandPalette } from './command-palette'
 import { buildDrawTools } from './draw'
 import { buildExplodeSlider } from './explode'
+import { buildNamedViews } from './views'
 import { buildNavCube } from './navcube'
 import { buildHelp } from './help'
 import { buildPrintCheck } from './printpanel'
@@ -39,6 +40,7 @@ buildCommandPalette(doc, view, $('#statusbar'))
 buildDrawTools($('#toolbar'), view, doc, $('#statusbar'))
 buildNavCube($('#scene'), view, doc)
 buildExplodeSlider($('#toolbar'), doc, $('#statusbar'))
+buildNamedViews($('#toolbar'), view, $('#statusbar'))
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
