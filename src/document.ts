@@ -242,12 +242,54 @@ export class CadDocument extends EventTarget {
     return { solid: obj.solid, matrix: obj.mesh.matrixWorld.toArray() }
   }
 
+  /** Adds every object whose projected centre falls inside the screen-space box to the selection. */
+  private selectInBox(rect: DOMRect, a: THREE.Vector2, b: THREE.Vector2) {
+    const centre = new THREE.Vector3()
+    const hits = this.objects.filter((obj) => {
+      centre.setFromMatrixPosition(obj.mesh.matrixWorld).project(this.view.camera)
+      if (centre.z > 1) return false
+      const x = rect.left + ((centre.x + 1) / 2) * rect.width
+      const y = rect.top + ((1 - centre.y) / 2) * rect.height
+      return x >= Math.min(a.x, b.x) && x <= Math.max(a.x, b.x) && y >= Math.min(a.y, b.y) && y <= Math.max(a.y, b.y)
+    })
+    this.select([...this.selection, ...hits.filter((o) => !this.selection.includes(o))])
+  }
+
   private bindPicking(dom: HTMLElement) {
     const raycaster = new THREE.Raycaster()
     const down = new THREE.Vector2()
 
-    dom.addEventListener('pointerdown', (e) => down.set(e.clientX, e.clientY))
+    const marquee = document.createElement('div')
+    marquee.className = 'marquee'
+    marquee.hidden = true
+    dom.parentElement!.appendChild(marquee)
+    let boxing = false
+
+    dom.addEventListener('pointerdown', (e) => {
+      down.set(e.clientX, e.clientY)
+      boxing = e.button === 0 && e.shiftKey && !this.gizmo.axis
+      // Shift-drag draws a selection box instead of orbiting the camera.
+      if (boxing) this.view.controls.enabled = false
+    })
+    dom.addEventListener('pointermove', (e) => {
+      if (!boxing) return
+      const rect = dom.getBoundingClientRect()
+      marquee.hidden = down.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) <= CLICK_SLOP_PX
+      marquee.style.left = `${Math.min(down.x, e.clientX) - rect.left}px`
+      marquee.style.top = `${Math.min(down.y, e.clientY) - rect.top}px`
+      marquee.style.width = `${Math.abs(e.clientX - down.x)}px`
+      marquee.style.height = `${Math.abs(e.clientY - down.y)}px`
+    })
     dom.addEventListener('pointerup', (e) => {
+      if (boxing) {
+        boxing = false
+        this.view.controls.enabled = true
+        if (!marquee.hidden) {
+          marquee.hidden = true
+          this.selectInBox(dom.getBoundingClientRect(), down, new THREE.Vector2(e.clientX, e.clientY))
+          return
+        }
+      }
       if (e.button !== 0 || this.gizmo.axis) return
       if (down.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) > CLICK_SLOP_PX) return
 
