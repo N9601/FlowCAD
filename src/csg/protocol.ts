@@ -18,6 +18,10 @@ export type PrimitiveSpec =
   | { kind: 'dome'; radius: number; segments: number }
   | { kind: 'capsule'; radius: number; length: number; segments: number }
   | { kind: 'pulley'; diameter: number; width: number; grooveDepth: number; bore: number }
+  /** `profile` is "radius,height" points; the outline is turned around the Z axis. */
+  | { kind: 'revolve'; profile: string; angle: number; segments: number }
+  /** `profile` is "x,y" points; `twist` is in degrees over the full height. */
+  | { kind: 'extrude'; profile: string; height: number; twist: number }
   | { kind: 'text'; text: string; letterHeight: number; thickness: number }
   | { kind: 'bolt'; size: number; length: number }
   | { kind: 'nut'; size: number; clearance: number }

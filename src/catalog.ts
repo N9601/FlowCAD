@@ -1,4 +1,5 @@
 import type { PrimitiveSpec } from './csg/protocol'
+import { parseProfile } from './csg/profile'
 import { grooveOpening } from './csg/shapes'
 
 export interface Shape {
@@ -26,6 +27,8 @@ export const CATEGORIES: { title: string; shapes: Shape[] }[] = [
       { label: 'Wedge', spec: { kind: 'wedge', x: 30, y: 20, z: 15 } },
       { label: 'Round box', spec: { kind: 'roundedBox', x: 30, y: 20, z: 12, radius: 3, segments: 32 } },
       { label: 'Dome', spec: { kind: 'dome', radius: 12, segments: 64 } },
+      { label: 'Revolve', spec: { kind: 'revolve', profile: '0,0 14,0 14,4 6,8 6,26 10,30 0,30', angle: 360, segments: 64 } },
+      { label: 'Extrude', spec: { kind: 'extrude', profile: '0,0 30,0 30,8 8,8 8,20 0,20', height: 10, twist: 0 } },
       { label: 'Text', spec: { kind: 'text', text: 'FlowCAD', letterHeight: 10, thickness: 3 } },
       { label: 'Capsule', spec: { kind: 'capsule', radius: 6, length: 30, segments: 48 } },
     ],
@@ -60,6 +63,8 @@ export function checkSpec(spec: PrimitiveSpec) {
     if (grooveOpening(spec.width, spec.grooveDepth) >= spec.width) throw new Error('Groove is too deep for this width')
     if (spec.bore / 2 >= spec.diameter / 2 - spec.grooveDepth) throw new Error('Bore must be smaller than the groove diameter')
   }
+  if (spec.kind === 'revolve') parseProfile(spec.profile, true)
+  if (spec.kind === 'extrude') parseProfile(spec.profile, false)
   if (spec.kind === 'text' && (spec.text.trim() === '' || spec.text.length > 60)) {
     throw new Error('Text must be 1 to 60 characters')
   }

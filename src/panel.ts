@@ -12,6 +12,8 @@ interface Field {
   step: number
   max?: number
   integer?: boolean
+  /** Free text instead of a number. */
+  string?: boolean
   /** Renders a dropdown instead of a free number. */
   options?: { value: number; label: string }[]
 }
@@ -43,7 +45,17 @@ const FIELDS: Record<PrimitiveSpec['kind'], Field[]> = {
   dome: [mm('radius', 'Radius'), SEGMENTS],
   capsule: [mm('radius', 'Radius'), mm('length', 'Overall length'), SEGMENTS],
   pulley: [mm('diameter', 'Outer diameter'), mm('width', 'Width'), mm('grooveDepth', 'Groove depth'), { key: 'bore', label: 'Bore diameter', min: 0, step: 1 }],
-  text: [mm('letterHeight', 'Letter height'), mm('thickness', 'Thickness')],
+  revolve: [
+    { key: 'profile', label: 'Profile r,z', min: 0, step: 1, string: true },
+    { key: 'angle', label: 'Angle (deg)', min: 1, max: 360, step: 15 },
+    SEGMENTS,
+  ],
+  extrude: [
+    { key: 'profile', label: 'Profile x,y', min: 0, step: 1, string: true },
+    mm('height', 'Height'),
+    { key: 'twist', label: 'Twist (deg)', min: -3600, max: 3600, step: 15 },
+  ],
+  text: [{ key: 'text', label: 'Text', min: 0, step: 1, string: true }, mm('letterHeight', 'Letter height'), mm('thickness', 'Thickness')],
   bolt: [METRIC, mm('length', 'Shank length')],
   nut: [METRIC, { key: 'clearance', label: 'Thread clearance', min: 0, max: 1, step: 0.05 }],
   rod: [METRIC, mm('length', 'Length')],
@@ -200,24 +212,27 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
 
   const specRows = (title: string, spec: PrimitiveSpec, apply: (next: PrimitiveSpec) => Promise<void>) => {
     props.appendChild(el('h3', undefined, title))
-    if (spec.kind === 'text') {
-      const row = props.appendChild(el('label', 'row'))
-      row.appendChild(el('span', undefined, 'Text'))
-      const input = row.appendChild(el('input'))
-      input.value = spec.text
-      input.addEventListener('change', async () => {
-        try {
-          const next = { ...spec, text: input.value }
-          checkSpec(next)
-          await apply(next)
-        } catch (err) {
-          status.textContent = `Error: ${err instanceof Error ? err.message : err}`
-          input.value = spec.text
-        }
-      })
-    }
     const values = spec as unknown as Record<string, number>
     for (const field of FIELDS[spec.kind]) {
+      if (field.string) {
+        const before = String(values[field.key])
+        const row = props.appendChild(el('label', 'row'))
+        row.appendChild(el('span', undefined, field.label))
+        const input = row.appendChild(el('input'))
+        input.value = before
+        input.title = before
+        input.addEventListener('change', async () => {
+          try {
+            const next = { ...spec, [field.key]: input.value } as PrimitiveSpec
+            checkSpec(next)
+            await apply(next)
+          } catch (err) {
+            status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+            input.value = before
+          }
+        })
+        continue
+      }
       numberRow(props, field.label, values[field.key], field, async (v) => {
         const value = Math.min(field.max ?? Infinity, Math.max(field.min, field.integer ? Math.round(v) : v))
         const next = { ...spec, [field.key]: value } as PrimitiveSpec

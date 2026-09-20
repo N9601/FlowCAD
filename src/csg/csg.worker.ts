@@ -5,6 +5,7 @@ import wasmUrl from 'manifold-3d/manifold.wasm?url'
 import { parse, type Font } from 'opentype.js'
 import fontUrl from '@fontsource/roboto/files/roboto-latin-700-normal.woff?url'
 import { gearProfile } from './gear'
+import { parseProfile } from './profile'
 import { capsule, dome, polygonSolid, pulley, roundedBox, wedge } from './shapes'
 import { textContours } from './text'
 import { bolt, nut, rod } from './thread'
@@ -62,6 +63,12 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
       return capsule(wasm, spec.radius, spec.length, spec.segments)
     case 'pulley':
       return pulley(wasm, spec.diameter, spec.width, spec.grooveDepth, spec.bore)
+    case 'revolve':
+      return wasm.Manifold.revolve(parseProfile(spec.profile, true), spec.segments, spec.angle)
+    case 'extrude': {
+      const steps = Math.min(1800, Math.ceil(Math.abs(spec.twist) / 2))
+      return wasm.Manifold.extrude(parseProfile(spec.profile, false), spec.height, steps, spec.twist, [1, 1], true)
+    }
     case 'text': {
       const contours = textContours(font, spec.text, spec.letterHeight)
       if (contours.length === 0) throw new Error('Text has no printable characters in this font')
