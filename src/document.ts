@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { TransformControls } from 'three/addons/controls/TransformControls.js'
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { CsgNode, PlacedSolid, PrimitiveSpec, SolidData } from './csg/protocol'
+import { presetOf } from './materials'
 import type { Viewport } from './viewport'
 
 const CREASE_ANGLE = THREE.MathUtils.degToRad(35)
@@ -51,6 +52,24 @@ export type SavedDocument = (ObjectState & { matrix: number[] })[]
 export type NewPart = Omit<ObjectState, 'id'> & { matrix: THREE.Matrix4 }
 
 const geometryCache = new WeakMap<SolidData, THREE.BufferGeometry>()
+
+const tintTmp = new THREE.Color()
+
+/** Applies a material preset's PBR knobs (roughness/metalness/opacity/tint) to a mesh material. */
+export function applyMaterialPreset(material: THREE.MeshStandardMaterial, color: number, name: string | undefined) {
+  const preset = presetOf(name)
+  material.roughness = preset.roughness
+  material.metalness = preset.metalness
+  if (preset.tint !== undefined) {
+    material.color.setHex(color).multiply(tintTmp.setHex(preset.tint))
+  } else {
+    material.color.setHex(color)
+  }
+  material.transparent = preset.opacity !== undefined && preset.opacity < 1
+  material.opacity = preset.opacity ?? 1
+  material.depthWrite = !material.transparent
+  material.needsUpdate = true
+}
 
 /** Shifts the vertices so the bounding-box centre is the origin; returns the old centre and the box. */
 function recentre(solid: SolidData) {
@@ -219,10 +238,11 @@ export class CadDocument extends EventTarget {
   private insert({ matrix, ...state }: ObjectState & { matrix: THREE.Matrix4 }): SceneObject {
     const mesh = new THREE.Mesh(
       displayGeometry(state.solid),
-      new THREE.MeshStandardMaterial({ color: state.color, roughness: 0.55, metalness: 0.1 }),
+      new THREE.MeshStandardMaterial({ color: state.color }),
     )
     mesh.castShadow = true
     mesh.receiveShadow = true
+    applyMaterialPreset(mesh.material, state.color, state.material)
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
     this.applyXray(mesh.material)
     mesh.visible = state.visible

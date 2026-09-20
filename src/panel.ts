@@ -5,7 +5,7 @@ import { METRIC_SIZES } from './csg/iso'
 import { DEFAULT_MATERIAL, gramsOf, MATERIALS } from './materials'
 import { formatArea, formatLength, formatVolume } from './units'
 import type { CsgNode, PrimitiveSpec } from './csg/protocol'
-import type { CadDocument, NewPart, SceneObject } from './document'
+import { applyMaterialPreset, type CadDocument, type NewPart, type SceneObject } from './document'
 
 interface Field {
   key: string
@@ -212,7 +212,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     color.value = '#' + obj.color.toString(16).padStart(6, '0')
     color.addEventListener('change', () => {
       obj.color = parseInt(color.value.slice(1), 16)
-      obj.mesh.material.color.setHex(obj.color)
+      applyMaterialPreset(obj.mesh.material, obj.color, obj.material)
       doc.commit()
     })
 
@@ -258,6 +258,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     materialSelect.value = obj.material ?? DEFAULT_MATERIAL
     materialSelect.addEventListener('change', () => {
       obj.material = materialSelect.value
+      applyMaterialPreset(obj.mesh.material, obj.color, obj.material)
       doc.commit()
     })
     const { volume, area } = measure(obj)

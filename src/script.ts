@@ -1,5 +1,6 @@
 import { MathUtils } from 'three'
 import { addShape, chamfer, combine, fillet } from './actions'
+import { applyMaterialPreset } from './document'
 import { dropToBed, mirror, type Axis } from './arrange'
 import { CATEGORIES } from './catalog'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
@@ -79,7 +80,14 @@ class Part {
     const hex = typeof value === 'string' ? parseInt(value.replace('#', ''), 16) : value
     if (!Number.isFinite(hex)) throw new Error('color() takes "#rrggbb" or a 0xrrggbb number')
     this.object.color = hex
-    this.object.mesh.material.color.setHex(hex)
+    applyMaterialPreset(this.object.mesh.material, hex, this.object.material)
+    return this
+  }
+
+  /** Sets the material preset (e.g. 'Steel', 'Glass', 'Wood'); drives look and mass. */
+  material(name: string) {
+    this.object.material = name
+    applyMaterialPreset(this.object.mesh.material, this.object.color, name)
     return this
   }
 }
