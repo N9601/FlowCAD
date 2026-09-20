@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 
 // CAD convention: Z is up, units are millimetres.
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1)
@@ -37,8 +38,13 @@ export class Viewport {
     this.controls.target.set(0, 0, 10)
     this.controls.update()
 
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3f48, 1.6))
-    const key = new THREE.DirectionalLight(0xffffff, 1.8)
+    // PMREM-baked room environment adds real reflections and soft-fill lighting to every material.
+    const pmrem = new THREE.PMREMGenerator(this.renderer)
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    this.scene.environmentIntensity = 0.6
+
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3f48, 0.6))
+    const key = new THREE.DirectionalLight(0xffffff, 1.2)
     key.position.set(60, -80, 120)
     this.scene.add(key)
 
