@@ -192,6 +192,11 @@ button.active {
   padding: 3px 6px;
 }
 
+#panel input[type='color'] {
+  padding: 0;
+  height: 22px;
+}
+
 #panel input:focus,
 #panel select:focus {
   outline: none;

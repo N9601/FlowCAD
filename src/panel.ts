@@ -170,6 +170,17 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
       doc.commit()
     })
 
+    const colorRow = props.appendChild(el('label', 'row'))
+    colorRow.appendChild(el('span', undefined, 'Color'))
+    const color = colorRow.appendChild(el('input'))
+    color.type = 'color'
+    color.value = '#' + obj.color.toString(16).padStart(6, '0')
+    color.addEventListener('change', () => {
+      obj.color = parseInt(color.value.slice(1), 16)
+      obj.mesh.material.color.setHex(obj.color)
+      doc.commit()
+    })
+
     const axes = ['x', 'y', 'z'] as const
     const { position, rotation, scale } = obj.mesh
     const deg = THREE.MathUtils.radToDeg
@@ -292,6 +303,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
           const local = { ...child, matrix: IDENTITY }
           parts.push({
             name: child.name,
+            color: obj.color,
             solid: child.solid ?? (await csg.evaluate(local)),
             spec: child.spec,
             tree: child.op ? local : undefined,

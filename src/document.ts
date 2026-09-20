@@ -5,7 +5,7 @@ import type { CsgNode, PlacedSolid, PrimitiveSpec, SolidData } from './csg/proto
 import type { Viewport } from './viewport'
 
 const CREASE_ANGLE = THREE.MathUtils.degToRad(35)
-const COLOR = 0x8fa3b8
+const DEFAULT_COLOR = 0x8fa3b8
 const COLOR_PRIMARY = 0x4da3ff
 const COLOR_SECONDARY = 0xffa64d
 const CLICK_SLOP_PX = 4
@@ -14,6 +14,7 @@ const MAX_HISTORY = 200
 export interface SceneObject {
   id: number
   name: string
+  color: number
   solid: SolidData
   /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
   spec?: PrimitiveSpec
@@ -25,6 +26,7 @@ export interface SceneObject {
 interface ObjectState {
   id: number
   name: string
+  color: number
   solid: SolidData
   spec?: PrimitiveSpec
   tree?: CsgNode
@@ -107,7 +109,7 @@ export class CadDocument extends EventTarget {
     // New primitives are dropped on the origin, resting on the ground plane.
     if (spec) centre.set(0, 0, (box.max.z - box.min.z) / 2)
     const id = this.nextId++
-    const obj = this.insert({ id, name: `${name} ${id}`, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
+    const obj = this.insert({ id, name: `${name} ${id}`, color: DEFAULT_COLOR, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
     this.select([obj])
     return obj
   }
@@ -156,7 +158,7 @@ export class CadDocument extends EventTarget {
   private insert({ matrix, ...state }: ObjectState & { matrix: THREE.Matrix4 }): SceneObject {
     const mesh = new THREE.Mesh(
       displayGeometry(state.solid),
-      new THREE.MeshStandardMaterial({ color: COLOR, roughness: 0.55, metalness: 0.1 }),
+      new THREE.MeshStandardMaterial({ color: state.color, roughness: 0.55, metalness: 0.1 }),
     )
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
     this.applyXray(mesh.material)
@@ -182,7 +184,7 @@ export class CadDocument extends EventTarget {
     this.selection.splice(0, this.selection.length, ...objs)
     for (const obj of this.objects) {
       const rank = this.selection.indexOf(obj)
-      obj.mesh.material.color.setHex(rank === -1 ? COLOR : rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
+      obj.mesh.material.color.setHex(rank === -1 ? obj.color : rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
     }
     const last = this.selection.at(-1)
     if (last) this.gizmo.attach(last.mesh)
@@ -216,7 +218,7 @@ export class CadDocument extends EventTarget {
   commit() {
     const snapshot: Snapshot = this.objects.map((o) => {
       o.mesh.updateMatrix()
-      return { id: o.id, name: o.name, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
+      return { id: o.id, name: o.name, color: o.color, solid: o.solid, spec: o.spec, tree: o.tree, matrix: o.mesh.matrix.clone() }
     })
     this.history.length = this.cursor + 1
     this.history.push(snapshot)
@@ -241,7 +243,7 @@ export class CadDocument extends EventTarget {
 
   /** Adds a copy of `src` at the given world matrix. Does not select it or record an undo step. */
   cloneAt(src: SceneObject, matrix: THREE.Matrix4): SceneObject {
-    return this.insert({ id: this.nextId++, name: `${src.name} copy`, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
+    return this.insert({ id: this.nextId++, name: `${src.name} copy`, color: src.color, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
   }
 
   /** Copies the selection, offset along X so the copies are visible. */
@@ -251,7 +253,9 @@ export class CadDocument extends EventTarget {
       const size = new THREE.Box3().setFromObject(src.mesh).getSize(new THREE.Vector3())
       const matrix = src.mesh.matrix.clone()
       matrix.elements[12] += size.x + 5
-      return this.cloneAt(src, matrix)
+      const copy = this.cloneAt(src, matrix)
+      copy.name = src.name
+      return copy
     })
     if (copies.length === 0) return
     this.select(copies)

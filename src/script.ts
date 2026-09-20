@@ -63,11 +63,20 @@ class Part {
     this.object.name = name
     return this
   }
+
+  /** Base color as "#rrggbb" or a 0xrrggbb number. */
+  color(value: string | number) {
+    const hex = typeof value === 'string' ? parseInt(value.replace('#', ''), 16) : value
+    if (!Number.isFinite(hex)) throw new Error('color() takes "#rrggbb" or a 0xrrggbb number')
+    this.object.color = hex
+    this.object.mesh.material.color.setHex(hex)
+    return this
+  }
 }
 
 export const STARTER_SCRIPT = `// Every shape takes an object of dimensions in mm; anything left out uses the default.
 // Shapes: ${CATEGORIES.flatMap((c) => c.shapes.map((s) => s.spec.kind)).join(', ')}
-// Parts:  .at(x,y,z)  .move(dx,dy,dz)  .rotate(x,y,z)  .scale(f)  .mirror('x')  .drop()  .clone()  .name('...')
+// Parts:  .at(x,y,z)  .move(dx,dy,dz)  .rotate(x,y,z)  .scale(f)  .mirror('x')  .drop()  .clone()  .color('#c9a')  .name('...')
 // Also:   union(a, b, ...)  subtract(target, ...tools)  intersect(a, b, ...)  clear()  fit()  print(...)
 
 clear()
