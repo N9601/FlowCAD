@@ -12,6 +12,7 @@ import { csg } from './csg/client'
 import { download, encodeBinaryStl } from './io/stl'
 import type { Viewport } from './viewport'
 import { addShape } from './actions'
+import { settleWithPhysics } from './physics'
 
 export interface Command {
   id: string
@@ -68,6 +69,7 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
   }))
 
   push('edit.undo', 'Undo', 'back revert history', () => doc.undo())
+  push('edit.settle', 'Physics settle', 'drop gravity fall pack', () => settleWithPhysics(doc))
   push('edit.redo', 'Redo', 'forward history', () => doc.redo())
   push('edit.duplicate', 'Duplicate', 'copy clone', requireSelection('any', () => doc.duplicate()))
   push('edit.delete', 'Delete', 'remove erase', requireSelection('any', () => { doc.remove([...doc.selection]); doc.commit() }))

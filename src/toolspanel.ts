@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import { align, circularArray, dropOntoSurface, dropToBed, linearArray, mirror, type Axis } from './arrange'
+import { settleWithPhysics } from './physics'
 import type { CadDocument } from './document'
 
 const AXES: Axis[] = ['x', 'y', 'z']
@@ -66,6 +67,14 @@ export function buildToolsPanel(section: HTMLElement, status: HTMLElement, doc: 
     const dropRow = buttonRow()
     action(dropRow, 'Drop to bed (B)', () => dropToBed(selection))
     action(dropRow, 'Drop onto surface', () => dropOntoSurface(selection, doc.objects))
+    const physicsBtn = section.appendChild(el('button', undefined, 'Physics settle'))
+    physicsBtn.title = 'Drop every visible object under gravity and let them stack; final resting positions become the new scene.'
+    physicsBtn.addEventListener('click', async () => {
+      status.textContent = 'Settling under gravity...'
+      const started = performance.now()
+      await settleWithPhysics(doc)
+      status.textContent = `Physics settle complete in ${(performance.now() - started).toFixed(0)} ms`
+    })
 
     section.appendChild(el('h3', undefined, 'Mirror'))
     const mirrorRow = buttonRow()
