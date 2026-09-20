@@ -9,6 +9,8 @@ Browser-based 3D CAD modeler. Everything runs client-side: no server, no account
   pyramid, wedge, rounded box, dome, capsule
 - Revolve and extrude (with twist) from an outline typed as a list of points
 - 3D text (bundled Roboto Bold), sized by capital letter height, for labels and engraving
+- Layout tools: drop-to-bed, mirror on any axis, align to a target, and linear or circular arrays
+- Measure tool: click two points on any model for distance and its X/Y/Z components; snaps to nearby corners
 - Mechanical generators: involute spur gear, V-groove pulley, ISO metric hex bolt, hex nut and threaded rod (M2 to M24,
   true helical 60 degree thread, adjustable nut clearance for printing)
 - Primitives stay parametric: edit dimensions in the side panel after creation
@@ -36,6 +38,8 @@ Browser-based 3D CAD modeler. Everything runs client-side: no server, no account
 | W / E / R | Move / rotate / scale |
 | X | X-ray mode |
 | F | Fit selection (or everything) in view |
+| M | Toggle the measure tool |
+| B | Drop the selection to the bed |
 | 1 / 2 / 3 / 4 | Front / right / top / iso view |
 | Ctrl+D | Duplicate selection |
 | Delete | Delete selection |
@@ -57,7 +61,7 @@ fit()
 ```
 
 Parts chain `.at(x, y, z)`, `.move(dx, dy, dz)`, `.rotate(x, y, z)`, `.scale(f)` and `.name(text)`.
-`union`, `subtract` and `intersect` take any number of parts; `print(...)` writes to the console output.
+`union`, `subtract` and `intersect` take any number of parts. Extras: `.mirror('x')`, `.drop()`, `.clone()`, and `print(...)` for console output. The **Load showcase** button in the console builds a planetary gear plinth demonstrating every kind of shape.
 
 ## Development
 
@@ -78,7 +82,10 @@ npm run build
 | `src/document.ts` | Scene objects, selection, gizmo, undo history |
 | `src/csg/` | Manifold WASM worker, typed request protocol, promise client |
 | `src/csg/gear.ts`, `src/csg/thread.ts`, `src/csg/iso.ts` | Gear profile, thread and fastener generators, ISO size table |
-| `src/csg/shapes.ts`, `src/csg/text.ts` | Extra solids and font outline extraction |
+| `src/csg/shapes.ts`, `src/csg/text.ts`, `src/csg/profile.ts` | Extra solids, font outline extraction, profile parsing |
+| `src/arrange.ts`, `src/toolspanel.ts` | Layout tools and their panel |
+| `src/measure.ts` | Measure tool with corner snapping |
+| `src/io/winding.ts` | Keeps mirrored parts outward-facing on export |
 | `src/catalog.ts`, `src/actions.ts` | Shape catalogue with defaults and validation; shared add/combine actions |
 | `src/palette.ts` | Categorized shape palette |
 | `src/script.ts`, `src/console.ts` | Script API and the console drawer |
