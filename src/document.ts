@@ -237,6 +237,11 @@ export class CadDocument extends EventTarget {
     this.restore(snapshot)
   }
 
+  /** Adds a copy of `src` at the given world matrix. Does not select it or record an undo step. */
+  cloneAt(src: SceneObject, matrix: THREE.Matrix4): SceneObject {
+    return this.insert({ id: this.nextId++, name: `${src.name} copy`, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
+  }
+
   /** Copies the selection, offset along X so the copies are visible. */
   duplicate() {
     const copies = this.selection.map((src) => {
@@ -244,7 +249,7 @@ export class CadDocument extends EventTarget {
       const size = new THREE.Box3().setFromObject(src.mesh).getSize(new THREE.Vector3())
       const matrix = src.mesh.matrix.clone()
       matrix.elements[12] += size.x + 5
-      return this.insert({ id: this.nextId++, name: `${src.name} copy`, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
+      return this.cloneAt(src, matrix)
     })
     if (copies.length === 0) return
     this.select(copies)

@@ -113,6 +113,29 @@ body {
   margin-top: 10px;
 }
 
+#panel .buttons {
+  display: flex;
+  gap: 4px;
+}
+
+#panel .buttons button {
+  margin-top: 4px;
+  padding: 5px 4px;
+}
+
+#panel .fields {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+#panel .mini {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 #panel .printcheck {
   margin-top: 10px;
   border-top: 1px solid var(--border);

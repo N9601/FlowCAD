@@ -185,9 +185,9 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
     const positionInputs = vectorRows('Position (mm)', (a) => position[a], (a, v) => (position[a] = v), { step: 1 })
     const rotationInputs = vectorRows('Rotation (deg)', (a) => deg(rotation[a]), (a, v) => (rotation[a] = THREE.MathUtils.degToRad(v)), { step: 15 })
     const scaleInputs = vectorRows('Scale', (a) => scale[a], (a, v) => {
-      if (v <= 0) throw new Error('Scale must be greater than zero')
+      if (v === 0) throw new Error('Scale cannot be zero')
       scale[a] = v
-    }, { step: 0.1, min: 0.01 })
+    }, { step: 0.1 })
     syncTransform = () => {
       axes.forEach((a, i) => {
         positionInputs[i].value = String(+position[a].toFixed(3))

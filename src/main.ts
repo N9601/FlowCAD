@@ -6,6 +6,7 @@ import { buildPanel } from './panel'
 import { buildPrintCheck } from './printpanel'
 import { autosave } from './storage'
 import { buildToolbar } from './toolbar'
+import { buildToolsPanel } from './toolspanel'
 import { Viewport } from './viewport'
 
 const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!
@@ -16,6 +17,7 @@ buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildConsole($('#toolbar'), $('#viewport'), doc, view)
 buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
+buildToolsPanel($('#panel').appendChild(document.createElement('section')), $('#statusbar'), doc)
 buildPrintCheck($('#toolbar'), $('#panel'), doc)
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
