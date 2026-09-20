@@ -7,6 +7,7 @@ import { decodeGlb, encodeGlb } from './io/gltf'
 import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
 import { decodePly, encodePly } from './io/ply'
 import { decodeProject, encodeProject } from './io/project'
+import { encodeBlueprint } from './io/blueprint'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
@@ -157,6 +158,12 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     button(file, 'Save project', () => {
       download(encodeProject(doc.serialize()), 'project.flowcad')
       status.textContent = `Saved ${doc.objects.length} object(s) to project.flowcad`
+    }),
+  )
+  needsAny.push(
+    button(file, 'Blueprint', () => {
+      download(encodeBlueprint(doc, view), 'flowcad-blueprint.svg')
+      status.textContent = 'Exported 4-view blueprint to flowcad-blueprint.svg'
     }),
   )
   const exporters: Record<string, (parts: NamedPart[]) => ArrayBuffer> = {

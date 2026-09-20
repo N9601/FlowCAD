@@ -112,6 +112,24 @@ export class Viewport {
     return this.renderer.domElement.toDataURL('image/png')
   }
 
+  /** Renders at a fixed pixel size (useful for prints/blueprints) and restores the previous size. */
+  offscreenShot(width: number, height: number): string {
+    const previous = new THREE.Vector2()
+    this.renderer.getSize(previous)
+    const aspect = this.camera.aspect
+    this.renderer.setSize(width, height, false)
+    this.camera.aspect = width / height
+    this.camera.updateProjectionMatrix()
+    try {
+      this.renderer.render(this.scene, this.camera)
+      return this.renderer.domElement.toDataURL('image/png')
+    } finally {
+      this.renderer.setSize(previous.x, previous.y, false)
+      this.camera.aspect = aspect
+      this.camera.updateProjectionMatrix()
+    }
+  }
+
   private resize() {
     const { clientWidth: w, clientHeight: h } = this.container
     if (w === 0 || h === 0) return
