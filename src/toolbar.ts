@@ -1,23 +1,10 @@
 import { Matrix4 } from 'three'
 import { csg } from './csg/client'
-import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
+import type { BooleanOp } from './csg/protocol'
 import type { CadDocument } from './document'
 import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
-
-const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
-  { label: 'Cube', spec: { kind: 'cube', x: 20, y: 20, z: 20 } },
-  { label: 'Cylinder', spec: { kind: 'cylinder', radius: 10, height: 20, segments: 64 } },
-  { label: 'Sphere', spec: { kind: 'sphere', radius: 12, segments: 64 } },
-  { label: 'Cone', spec: { kind: 'cone', radius: 10, height: 20, segments: 64 } },
-  { label: 'Tube', spec: { kind: 'tube', outerRadius: 10, innerRadius: 7, height: 20, segments: 64 } },
-  { label: 'Torus', spec: { kind: 'torus', majorRadius: 14, minorRadius: 4, segments: 64 } },
-  { label: 'Bolt', spec: { kind: 'bolt', size: 8, length: 25 } },
-  { label: 'Nut', spec: { kind: 'nut', size: 8, clearance: 0.15 } },
-  { label: 'Rod', spec: { kind: 'rod', size: 8, length: 40 } },
-  { label: 'Gear', spec: { kind: 'gear', module: 2, teeth: 20, pressureAngle: 20, thickness: 8, bore: 8 } },
-]
 
 const BOOLEANS: { label: string; op: BooleanOp }[] = [
   { label: 'Union', op: 'union' },
@@ -42,14 +29,6 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       }
     })
     return parent.appendChild(el)
-  }
-
-  const primitives = group()
-  for (const { label, spec } of PRIMITIVES) {
-    button(primitives, label, async () => {
-      doc.add(label, await csg.primitive(spec), spec)
-      doc.commit()
-    })
   }
 
   const booleans = group()
