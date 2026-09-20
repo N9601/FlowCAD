@@ -223,6 +223,8 @@ export class CadDocument extends EventTarget {
       const rank = this.selection.indexOf(obj)
       obj.mesh.material.color.setHex(rank === -1 ? obj.color : rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
     }
+    // Highlighted silhouette around every selected object; the second colour is only for the tool half of a boolean pair.
+    this.view.outlinePass.selectedObjects = this.selection.map((obj) => obj.mesh)
     const last = this.selection.at(-1)
     if (last) this.gizmo.attach(last.mesh)
     else this.gizmo.detach()
