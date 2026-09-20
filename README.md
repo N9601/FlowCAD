@@ -11,6 +11,9 @@ Browser-based 3D CAD modeler. Everything runs client-side: no server, no account
 - 3D text (bundled Roboto Bold), sized by capital letter height, for labels and engraving
 - Layout tools: drop-to-bed, mirror on any axis, align to a target, and linear or circular arrays
 - Measure tool: click two points on any model for distance and its X/Y/Z components; snaps to nearby corners
+- Live cross-section view: drag a plane on X, Y or Z through the whole scene without cutting geometry
+- Per-object color pickers, remembered through save/load
+- Native .flowcad JSON project files (Save project / Open); scene autosaves to IndexedDB too
 - Mechanical generators: involute spur gear, V-groove pulley, ISO metric hex bolt, hex nut and threaded rod (M2 to M24,
   true helical 60 degree thread, adjustable nut clearance for printing)
 - Primitives stay parametric: edit dimensions in the side panel after creation
@@ -39,6 +42,7 @@ Browser-based 3D CAD modeler. Everything runs client-side: no server, no account
 | X | X-ray mode |
 | F | Fit selection (or everything) in view |
 | M | Toggle the measure tool |
+| C | Toggle live cross-section |
 | B | Drop the selection to the bed |
 | 1 / 2 / 3 / 4 | Front / right / top / iso view |
 | Ctrl+D | Duplicate selection |
@@ -85,12 +89,14 @@ npm run build
 | `src/csg/shapes.ts`, `src/csg/text.ts`, `src/csg/profile.ts` | Extra solids, font outline extraction, profile parsing |
 | `src/arrange.ts`, `src/toolspanel.ts` | Layout tools and their panel |
 | `src/measure.ts` | Measure tool with corner snapping |
+| `src/section.ts` | Live cross-section clipping |
+| `src/io/project.ts` | .flowcad JSON project files |
+| `src/printcheck.ts`, `src/printfix.ts`, `src/printpanel.ts` | Print check, auto-fix and their panel |
 | `src/io/winding.ts` | Keeps mirrored parts outward-facing on export |
 | `src/catalog.ts`, `src/actions.ts` | Shape catalogue with defaults and validation; shared add/combine actions |
 | `src/palette.ts` | Categorized shape palette |
 | `src/script.ts`, `src/console.ts` | Script API and the console drawer |
 | `src/io/` | STL, OBJ, GLB and PLY import/export, 3MF export, SVG/DXF sections, ZIP writer |
-| `src/printcheck.ts`, `src/printpanel.ts` | Printability analysis and its report/overlay |
 | `src/panel.ts` | Object list and properties editor |
 | `src/storage.ts` | IndexedDB autosave |
 | `src/toolbar.ts` | Toolbar and keyboard bindings |
