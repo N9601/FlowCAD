@@ -3,6 +3,7 @@ import { buildConsole } from './console'
 import { CadDocument, type SavedDocument } from './document'
 import { buildPalette } from './palette'
 import { buildPanel } from './panel'
+import { buildPrintCheck } from './printpanel'
 import { autosave } from './storage'
 import { buildToolbar } from './toolbar'
 import { Viewport } from './viewport'
@@ -15,6 +16,7 @@ buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildConsole($('#toolbar'), $('#viewport'), doc, view)
 buildPalette($('#palette'), $('#statusbar'), doc)
 buildPanel($('#panel'), $('#statusbar'), doc)
+buildPrintCheck($('#toolbar'), $('#panel'), doc)
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)

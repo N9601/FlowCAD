@@ -113,6 +113,30 @@ body {
   margin-top: 10px;
 }
 
+#panel .printcheck {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+#panel .pass {
+  color: #56d364;
+}
+
+#panel .fail {
+  color: #ff7b72;
+}
+
+#panel .issue {
+  margin: 3px 0;
+  padding-left: 8px;
+  border-left: 2px solid #ff7b72;
+}
+
+button.active {
+  border-color: var(--accent);
+  background: #2a3747;
+}
+
 #panel .row {
   display: grid;
   grid-template-columns: 1fr 110px;
