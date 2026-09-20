@@ -1,6 +1,10 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 
 // CAD convention: Z is up, units are millimetres.
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1)
@@ -20,6 +24,8 @@ export class Viewport {
   readonly camera: THREE.PerspectiveCamera
   readonly renderer: THREE.WebGLRenderer
   readonly controls: OrbitControls
+  readonly outlinePass: OutlinePass
+  private readonly composer: EffectComposer
   private readonly container: HTMLElement
 
   /** Radians per second when the turntable is on; 0 means static. */
@@ -56,6 +62,18 @@ export class Viewport {
     this.scene.add(grid)
     this.scene.add(new THREE.AxesHelper(30))
 
+    // Post-processing pipeline: normal render + outline pass around selected objects.
+    this.composer = new EffectComposer(this.renderer)
+    this.composer.addPass(new RenderPass(this.scene, this.camera))
+    this.outlinePass = new OutlinePass(new THREE.Vector2(1, 1), this.scene, this.camera)
+    this.outlinePass.edgeStrength = 6
+    this.outlinePass.edgeGlow = 0.6
+    this.outlinePass.edgeThickness = 1.5
+    this.outlinePass.visibleEdgeColor.set(0x4da3ff)
+    this.outlinePass.hiddenEdgeColor.set(0x1e3d5c)
+    this.composer.addPass(this.outlinePass)
+    this.composer.addPass(new OutputPass())
+
     new ResizeObserver(() => this.resize()).observe(container)
     this.resize()
     let last = performance.now()
@@ -64,7 +82,7 @@ export class Viewport {
       const delta = (now - last) / 1000
       last = now
       if (this.turntableSpeed !== 0) this.orbit(this.turntableSpeed * delta)
-      this.renderer.render(this.scene, this.camera)
+      this.composer.render()
     })
   }
 
@@ -108,7 +126,7 @@ export class Viewport {
 
   /** Renders one frame synchronously and returns the canvas PNG as a data URL. */
   screenshot(): string {
-    this.renderer.render(this.scene, this.camera)
+    this.composer.render()
     return this.renderer.domElement.toDataURL('image/png')
   }
 
@@ -118,13 +136,17 @@ export class Viewport {
     this.renderer.getSize(previous)
     const aspect = this.camera.aspect
     this.renderer.setSize(width, height, false)
+    this.composer.setSize(width, height)
+    this.outlinePass.setSize(width, height)
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
     try {
-      this.renderer.render(this.scene, this.camera)
+      this.composer.render()
       return this.renderer.domElement.toDataURL('image/png')
     } finally {
       this.renderer.setSize(previous.x, previous.y, false)
+      this.composer.setSize(previous.x, previous.y)
+      this.outlinePass.setSize(previous.x, previous.y)
       this.camera.aspect = aspect
       this.camera.updateProjectionMatrix()
     }
@@ -136,5 +158,7 @@ export class Viewport {
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(w, h, false)
+    this.composer.setSize(w, h)
+    this.outlinePass.setSize(w, h)
   }
 }

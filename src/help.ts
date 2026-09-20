@@ -52,14 +52,24 @@ export function buildHelp(toolbar: HTMLElement) {
   close.addEventListener('click', () => setOpen(false))
 
   const toggle = toolbar.appendChild(el('div', 'group')).appendChild(el('button', undefined, 'Help (?)'))
-  toggle.addEventListener('click', () => setOpen(Boolean(overlay.hidden)))
+  const openHelp = () => {
+    // Close any other overlay first so only one modal is visible at a time.
+    for (const other of document.querySelectorAll('.palette-overlay:not([hidden])')) (other as HTMLElement).hidden = true
+    setOpen(Boolean(overlay.hidden))
+  }
+  toggle.addEventListener('click', openHelp)
 
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.hidden) {
+      e.preventDefault()
+      setOpen(false)
+      return
+    }
     const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement
     if (typing || e.ctrlKey || e.metaKey || e.altKey) return
     if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
       e.preventDefault()
-      setOpen(Boolean(overlay.hidden))
+      openHelp()
     }
   })
 }
