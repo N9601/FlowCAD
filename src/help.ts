@@ -9,6 +9,7 @@ const SHORTCUTS: [string, string][] = [
   ['M', 'Toggle measure tool'],
   ['B', 'Drop selection to the bed'],
   ['Ctrl+D', 'Duplicate selection'],
+  ['Ctrl+C / Ctrl+V', 'Copy / paste selection to the system clipboard'],
   ['Del / Backspace', 'Delete selection'],
   ['Ctrl+Z / Ctrl+Y', 'Undo / Redo'],
   ['Esc', 'Clear selection or exit a tool'],

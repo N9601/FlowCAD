@@ -173,6 +173,11 @@ export class CadDocument extends EventTarget {
     this.commit()
   }
 
+  /** Adds a fully-described part with a fresh id. Callers commit their own undo step. */
+  addPart(part: NewPart): SceneObject {
+    return this.insert({ ...part, id: this.nextId++ })
+  }
+
   /** Swaps in regenerated geometry, keeping the object's transform. */
   replaceSolid(obj: SceneObject, solid: SolidData, spec: PrimitiveSpec) {
     recentre(solid)

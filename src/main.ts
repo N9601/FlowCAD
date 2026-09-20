@@ -9,6 +9,7 @@ import { buildCommandPalette } from './command-palette'
 import { buildDrawTools } from './draw'
 import { buildExplodeSlider } from './explode'
 import { buildAnnotations } from './annotations'
+import { buildClipboard } from './clipboard'
 import { buildNamedViews } from './views'
 import { buildNavCube } from './navcube'
 import { buildHelp } from './help'
@@ -43,6 +44,7 @@ buildNavCube($('#scene'), view, doc)
 buildExplodeSlider($('#toolbar'), doc, $('#statusbar'))
 buildNamedViews($('#toolbar'), view, $('#statusbar'))
 buildAnnotations($('#scene'), $('#toolbar'), view, doc, $('#statusbar'))
+buildClipboard(doc, $('#statusbar'))
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
