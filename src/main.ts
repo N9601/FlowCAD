@@ -21,6 +21,7 @@ import { buildAlignmentGuides } from './guides'
 import { buildLayerPreview } from './layers'
 import { autosave, snapshots } from './storage'
 import { buildTheme } from './theme'
+import { buildUnitsToggle } from './units-ui'
 import { buildToolbar } from './toolbar'
 import { buildToolsPanel } from './toolspanel'
 import { Viewport } from './viewport'
@@ -32,6 +33,7 @@ const doc = new CadDocument(view)
 // Exposed for the browser console: `flowcad.doc.serialize()` and similar.
 ;(window as unknown as { flowcad: { doc: CadDocument; view: Viewport } }).flowcad = { doc, view }
 buildTheme($('#toolbar'), view)
+buildUnitsToggle($('#toolbar'), doc)
 buildToolbar($('#toolbar'), $('#statusbar'), doc, view)
 buildConsole($('#toolbar'), $('#viewport'), doc, view)
 buildMeasure($('#toolbar'), view, doc, $('#statusbar'))

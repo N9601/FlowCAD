@@ -3,6 +3,7 @@ import { checkSpec } from './catalog'
 import { csg } from './csg/client'
 import { METRIC_SIZES } from './csg/iso'
 import { DEFAULT_MATERIAL, gramsOf, MATERIALS } from './materials'
+import { formatArea, formatLength, formatVolume } from './units'
 import type { CsgNode, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument, NewPart, SceneObject } from './document'
 
@@ -249,7 +250,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
 
     const size = new THREE.Box3().setFromObject(obj.mesh).getSize(new THREE.Vector3())
     props.appendChild(el('h3', undefined, 'Info'))
-    props.appendChild(el('p', 'hint', `Size ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} mm`))
+    props.appendChild(el('p', 'hint', `Size ${formatLength(size.x)} x ${formatLength(size.y)} x ${formatLength(size.z)}`))
     const materialRow = props.appendChild(el('label', 'row'))
     materialRow.appendChild(el('span', undefined, 'Material'))
     const materialSelect = materialRow.appendChild(el('select'))
@@ -260,7 +261,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
       doc.commit()
     })
     const { volume, area } = measure(obj)
-    props.appendChild(el('p', 'hint', `Volume ${(volume / 1000).toFixed(2)} cm3, surface ${(area / 100).toFixed(2)} cm2, mass ${gramsOf(volume, obj.material).toFixed(1)} g`))
+    props.appendChild(el('p', 'hint', `Volume ${formatVolume(volume)}, surface ${formatArea(area)}, mass ${gramsOf(volume, obj.material).toFixed(1)} g`))
     props.appendChild(el('p', 'hint', `${obj.solid.indices.length / 3} triangles, ${obj.solid.positions.length / 3} vertices`))
   }
 
