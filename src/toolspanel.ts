@@ -1,5 +1,5 @@
 import { Vector3 } from 'three'
-import { align, circularArray, dropToBed, linearArray, mirror, type Axis } from './arrange'
+import { align, circularArray, dropOntoSurface, dropToBed, linearArray, mirror, type Axis } from './arrange'
 import type { CadDocument } from './document'
 
 const AXES: Axis[] = ['x', 'y', 'z']
@@ -63,7 +63,9 @@ export function buildToolsPanel(section: HTMLElement, status: HTMLElement, doc: 
       }
     }
 
-    action(buttonRow(), 'Drop to bed (B)', () => dropToBed(selection))
+    const dropRow = buttonRow()
+    action(dropRow, 'Drop to bed (B)', () => dropToBed(selection))
+    action(dropRow, 'Drop onto surface', () => dropOntoSurface(selection, doc.objects))
 
     section.appendChild(el('h3', undefined, 'Mirror'))
     const mirrorRow = buttonRow()

@@ -3,6 +3,8 @@ import type { CadDocument, SceneObject } from './document'
 
 export type Axis = 'x' | 'y' | 'z'
 
+const SETTLE_TOLERANCE = 0.01
+
 const MAX_COPIES = 200
 
 const worldBox = (obj: SceneObject) => new THREE.Box3().setFromObject(obj.mesh)
@@ -20,6 +22,23 @@ function currentMatrix(obj: SceneObject): THREE.Matrix4 {
 /** Lowers or raises each object so its lowest point sits on Z = 0. */
 export function dropToBed(objects: readonly SceneObject[]) {
   for (const obj of objects) obj.mesh.position.z -= worldBox(obj).min.z
+}
+
+/** Drops each object so its lowest point rests on the highest overlapping other object, or on the bed. */
+export function dropOntoSurface(objects: readonly SceneObject[], all: readonly SceneObject[]) {
+  for (const obj of objects) {
+    const box = worldBox(obj)
+    let target = 0
+    for (const other of all) {
+      if (other === obj || !other.mesh.visible) continue
+      const otherBox = worldBox(other)
+      if (otherBox.max.x <= box.min.x || otherBox.min.x >= box.max.x) continue
+      if (otherBox.max.y <= box.min.y || otherBox.min.y >= box.max.y) continue
+      if (otherBox.max.z > box.min.z + SETTLE_TOLERANCE) continue
+      if (otherBox.max.z > target) target = otherBox.max.z
+    }
+    obj.mesh.position.z += target - box.min.z
+  }
 }
 
 /** Moves every other object so its bounding-box centre (or low side) matches the target's on one axis. */

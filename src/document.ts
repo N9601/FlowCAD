@@ -5,7 +5,8 @@ import type { CsgNode, PlacedSolid, PrimitiveSpec, SolidData } from './csg/proto
 import type { Viewport } from './viewport'
 
 const CREASE_ANGLE = THREE.MathUtils.degToRad(35)
-const DEFAULT_COLOR = 0x8fa3b8
+// Cycled through for new primitives so scenes look inviting out of the box.
+const AUTO_PALETTE = [0x8fa3b8, 0x66aaff, 0xffb066, 0x66ffa0, 0xff6666, 0xc98fff, 0xffd24d, 0x67d8b6]
 const COLOR_PRIMARY = 0x4da3ff
 const COLOR_SECONDARY = 0xffa64d
 const CLICK_SLOP_PX = 4
@@ -135,7 +136,8 @@ export class CadDocument extends EventTarget {
     // New primitives are dropped on the origin, resting on the ground plane.
     if (spec) centre.set(0, 0, (box.max.z - box.min.z) / 2)
     const id = this.nextId++
-    const obj = this.insert({ id, name: `${name} ${id}`, color: DEFAULT_COLOR, visible: true, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
+    const color = AUTO_PALETTE[(id - 1) % AUTO_PALETTE.length]
+    const obj = this.insert({ id, name: `${name} ${id}`, color, visible: true, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
     this.select([obj])
     return obj
   }
