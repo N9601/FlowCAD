@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { PlacedSolid } from '../csg/protocol'
+import type { PlacedSolid, SolidData } from '../csg/protocol'
 
 const HEADER_BYTES = 80
 const TRIANGLE_BYTES = 50
@@ -34,6 +34,46 @@ export function encodeBinaryStl(parts: readonly PlacedSolid[]): ArrayBuffer {
     }
   }
   return buffer
+}
+
+function readTriangleSoup(buffer: ArrayBuffer): Float32Array {
+  const view = new DataView(buffer)
+  const count = buffer.byteLength >= HEADER_BYTES + 4 ? view.getUint32(HEADER_BYTES, true) : 0
+  if (count > 0 && buffer.byteLength === HEADER_BYTES + 4 + count * TRIANGLE_BYTES) {
+    const soup = new Float32Array(count * 9)
+    for (let t = 0; t < count; t++) {
+      const base = HEADER_BYTES + 4 + t * TRIANGLE_BYTES + 12
+      for (let k = 0; k < 9; k++) soup[t * 9 + k] = view.getFloat32(base + k * 4, true)
+    }
+    return soup
+  }
+  const text = new TextDecoder().decode(buffer)
+  const numbers = [...text.matchAll(/vertex\s+(\S+)\s+(\S+)\s+(\S+)/g)].flatMap((m) => [+m[1], +m[2], +m[3]])
+  return new Float32Array(numbers)
+}
+
+/** Parses binary or ASCII STL and welds coincident vertices into an indexed mesh. */
+export function decodeStl(buffer: ArrayBuffer): SolidData {
+  const soup = readTriangleSoup(buffer)
+  if (soup.length === 0 || soup.length % 9 !== 0) throw new Error('Not a valid STL file')
+
+  const lookup = new Map<string, number>()
+  const positions: number[] = []
+  const indices = new Uint32Array(soup.length / 3)
+  for (let i = 0; i < indices.length; i++) {
+    const x = soup[i * 3]
+    const y = soup[i * 3 + 1]
+    const z = soup[i * 3 + 2]
+    const key = `${Math.round(x * 1e5)},${Math.round(y * 1e5)},${Math.round(z * 1e5)}`
+    let index = lookup.get(key)
+    if (index === undefined) {
+      index = positions.length / 3
+      lookup.set(key, index)
+      positions.push(x, y, z)
+    }
+    indices[i] = index
+  }
+  return { positions: new Float32Array(positions), indices }
 }
 
 export function download(data: ArrayBuffer, filename: string) {

@@ -75,6 +75,21 @@ function run(wasm: Wasm, req: CsgRequest): SolidData {
     }
   }
 
+  if (req.type === 'validate') {
+    let m: Manifold
+    try {
+      m = new wasm.Manifold(new wasm.Mesh({ numProp: 3, vertProperties: req.solid.positions, triVerts: req.solid.indices }))
+    } catch {
+      throw new Error('mesh is not watertight, so it cannot be used as a solid')
+    }
+    try {
+      if (m.isEmpty()) throw new Error('mesh has no volume')
+      return toSolid(m)
+    } finally {
+      m.delete()
+    }
+  }
+
   const a = place(wasm, req.a)
   const b = place(wasm, req.b)
   const result =

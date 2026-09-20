@@ -23,6 +23,7 @@ export interface PlacedSolid {
 export type CsgRequest =
   | { type: 'primitive'; spec: PrimitiveSpec }
   | { type: 'boolean'; op: BooleanOp; a: PlacedSolid; b: PlacedSolid }
+  | { type: 'validate'; solid: SolidData }
 
 export type CsgResponse =
   | { id: number; ok: true; solid: SolidData }

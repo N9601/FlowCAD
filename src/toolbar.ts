@@ -1,7 +1,7 @@
 import { csg } from './csg/client'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument } from './document'
-import { download, encodeBinaryStl } from './io/stl'
+import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
 const PRIMITIVES: { label: string; spec: PrimitiveSpec }[] = [
   { label: 'Cube', spec: { kind: 'cube', size: [20, 20, 20] } },
@@ -91,6 +91,35 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   })
 
   const file = group()
+  const importFiles = async (files: Iterable<File>) => {
+    for (const f of files) {
+      if (!f.name.toLowerCase().endsWith('.stl')) throw new Error(`${f.name}: only STL import is supported so far`)
+      status.textContent = `Importing ${f.name}...`
+      const solid = await csg.validate(decodeStl(await f.arrayBuffer()))
+      doc.add(f.name.replace(/\.stl$/i, ''), solid)
+      doc.commit()
+    }
+  }
+  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.stl', multiple: true })
+  picker.addEventListener('change', async () => {
+    try {
+      await importFiles(picker.files ?? [])
+    } catch (err) {
+      status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+    }
+    picker.value = ''
+  })
+  button(file, 'Import STL', () => picker.click())
+
+  window.addEventListener('dragover', (e) => e.preventDefault())
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault()
+    try {
+      await importFiles(e.dataTransfer?.files ?? [])
+    } catch (err) {
+      status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+    }
+  })
   needsAny.push(
     button(file, 'Export STL', () => {
       const targets = doc.selection.length > 0 ? doc.selection : doc.objects
