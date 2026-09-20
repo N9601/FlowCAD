@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import type { PlacedSolid } from '../csg/protocol'
+import type { PlacedSolid, SolidData } from '../csg/protocol'
+import { weld } from './stl'
 import { zip } from './zip'
 
 export interface NamedPart extends PlacedSolid {
@@ -34,6 +35,28 @@ export function encodeObj(parts: readonly NamedPart[]): ArrayBuffer {
     base += vertices.length
   }
   return new TextEncoder().encode(lines.join('\n') + '\n').buffer as ArrayBuffer
+}
+
+/** Reads vertices and faces from a Wavefront OBJ; polygons are fan-triangulated, groups are merged. */
+export function decodeObj(buffer: ArrayBuffer): SolidData {
+  const vertices: number[][] = []
+  const soup: number[] = []
+  for (const line of new TextDecoder().decode(buffer).split('\n')) {
+    const [tag, ...args] = line.trim().split(/\s+/)
+    if (tag === 'v') {
+      vertices.push(args.slice(0, 3).map(Number))
+    } else if (tag === 'f') {
+      const corners = args.map((arg) => {
+        const index = parseInt(arg, 10)
+        const vertex = vertices[index < 0 ? vertices.length + index : index - 1]
+        if (!vertex) throw new Error('OBJ face refers to a missing vertex')
+        return vertex
+      })
+      for (let i = 1; i < corners.length - 1; i++) soup.push(...corners[0], ...corners[i], ...corners[i + 1])
+    }
+  }
+  if (soup.length === 0) throw new Error('OBJ file has no faces')
+  return weld(new Float32Array(soup))
 }
 
 const escapeXml = (s: string) => s.replace(/[<>&"]/g, (c) => `&#${c.charCodeAt(0)};`)

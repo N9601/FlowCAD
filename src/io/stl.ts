@@ -52,11 +52,15 @@ function readTriangleSoup(buffer: ArrayBuffer): Float32Array {
   return new Float32Array(numbers)
 }
 
-/** Parses binary or ASCII STL and welds coincident vertices into an indexed mesh. */
+/** Parses binary or ASCII STL into an indexed mesh. */
 export function decodeStl(buffer: ArrayBuffer): SolidData {
   const soup = readTriangleSoup(buffer)
   if (soup.length === 0 || soup.length % 9 !== 0) throw new Error('Not a valid STL file')
+  return weld(soup)
+}
 
+/** Turns loose triangles (9 floats each) into an indexed mesh by merging coincident vertices. */
+export function weld(soup: Float32Array): SolidData {
   const lookup = new Map<string, number>()
   const positions: number[] = []
   const indices = new Uint32Array(soup.length / 3)

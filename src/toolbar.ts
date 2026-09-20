@@ -1,7 +1,7 @@
 import { csg } from './csg/client'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument } from './document'
-import { encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
+import { decodeObj, encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
 
@@ -110,14 +110,15 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   )
   const importFiles = async (files: Iterable<File>) => {
     for (const f of files) {
-      if (!f.name.toLowerCase().endsWith('.stl')) throw new Error(`${f.name}: only STL import is supported so far`)
+      const decode = { stl: decodeStl, obj: decodeObj }[f.name.split('.').pop()!.toLowerCase()]
+      if (!decode) throw new Error(`${f.name}: only STL and OBJ files can be imported`)
       status.textContent = `Importing ${f.name}...`
-      const solid = await csg.validate(decodeStl(await f.arrayBuffer()))
-      doc.add(f.name.replace(/\.stl$/i, ''), solid)
+      const solid = await csg.validate(decode(await f.arrayBuffer()))
+      doc.add(f.name.replace(/\.[^.]+$/, ''), solid)
       doc.commit()
     }
   }
-  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.stl', multiple: true })
+  const picker = Object.assign(document.createElement('input'), { type: 'file', accept: '.stl,.obj', multiple: true })
   picker.addEventListener('change', async () => {
     try {
       await importFiles(picker.files ?? [])
@@ -126,7 +127,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     }
     picker.value = ''
   })
-  button(file, 'Import STL', () => picker.click())
+  button(file, 'Import', () => picker.click())
 
   window.addEventListener('dragover', (e) => e.preventDefault())
   window.addEventListener('drop', async (e) => {
