@@ -22,6 +22,9 @@ export class Viewport {
   readonly controls: OrbitControls
   private readonly container: HTMLElement
 
+  /** Radians per second when the turntable is on; 0 means static. */
+  private turntableSpeed = 0
+
   constructor(container: HTMLElement) {
     this.container = container
     this.scene.background = new THREE.Color(0x1b1e23)
@@ -55,7 +58,14 @@ export class Viewport {
 
     new ResizeObserver(() => this.resize()).observe(container)
     this.resize()
-    this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera))
+    let last = performance.now()
+    this.renderer.setAnimationLoop(() => {
+      const now = performance.now()
+      const delta = (now - last) / 1000
+      last = now
+      if (this.turntableSpeed !== 0) this.orbit(this.turntableSpeed * delta)
+      this.renderer.render(this.scene, this.camera)
+    })
   }
 
   /** Frames the given objects (or a default area when empty), optionally from a standard direction. */
@@ -75,6 +85,31 @@ export class Viewport {
     this.controls.target.copy(sphere.center)
     this.camera.position.copy(sphere.center).addScaledVector(direction, distance)
     this.controls.update()
+  }
+
+  /** Spins the camera around the current target by `angle` radians (positive = counter-clockwise viewed from +Z). */
+  orbit(angle: number) {
+    const offset = this.camera.position.clone().sub(this.controls.target)
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    offset.set(offset.x * cos - offset.y * sin, offset.x * sin + offset.y * cos, offset.z)
+    this.camera.position.copy(this.controls.target).add(offset)
+    this.controls.update()
+  }
+
+  /** Toggles auto-rotation; degrees per second. */
+  setTurntable(degreesPerSecond: number) {
+    this.turntableSpeed = THREE.MathUtils.degToRad(degreesPerSecond)
+  }
+
+  isTurntableRunning() {
+    return this.turntableSpeed !== 0
+  }
+
+  /** Renders one frame synchronously and returns the canvas PNG as a data URL. */
+  screenshot(): string {
+    this.renderer.render(this.scene, this.camera)
+    return this.renderer.domElement.toDataURL('image/png')
   }
 
   private resize() {

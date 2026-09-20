@@ -65,6 +65,19 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
   button(gizmo, 'Rotate (E)', () => doc.setGizmoMode('rotate'))
   button(gizmo, 'Scale (R)', () => doc.setGizmoMode('scale'))
   button(gizmo, 'X-Ray (X)', () => doc.toggleXray())
+  const shotBtn = button(gizmo, 'Snapshot', () => {
+    const url = view.screenshot()
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'flowcad-view.png' })
+    a.click()
+    status.textContent = 'Snapshot saved as flowcad-view.png'
+  })
+  shotBtn.title = 'Save the current view as a PNG.'
+  const spinBtn = button(gizmo, 'Spin', () => {
+    const running = view.isTurntableRunning()
+    view.setTurntable(running ? 0 : 20)
+    spinBtn.classList.toggle('active', !running)
+    status.textContent = running ? 'Spin off' : 'Spin on: 20 deg/sec around Z'
+  })
   const snapField = gizmo.appendChild(Object.assign(document.createElement('label'), { className: 'field', textContent: 'Snap' }))
   const snap = snapField.appendChild(document.createElement('select'))
   for (const value of [0.1, 0.5, 1, 5, 10]) snap.add(new Option(`${value} mm`, String(value)))
