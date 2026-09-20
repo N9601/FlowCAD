@@ -5,6 +5,7 @@ import { buildMeasure } from './measure'
 import { buildPalette } from './palette'
 import { buildPanel } from './panel'
 import { buildContextMenu } from './contextmenu'
+import { buildHelp } from './help'
 import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
 import { buildSectionView } from './section'
@@ -29,6 +30,7 @@ buildPrintCheck($('#toolbar'), $('#panel'), $('#statusbar'), doc)
 buildSectionView($('#toolbar'), view, doc, $('#statusbar'))
 buildContextMenu($('#scene'), doc, $('#statusbar'))
 buildStats($('#scene'), doc)
+buildHelp($('#toolbar'))
 
 const saved = await autosave.load<SavedDocument>().catch(() => undefined)
 if (saved?.length) doc.load(saved)
