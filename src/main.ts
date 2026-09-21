@@ -16,6 +16,7 @@ import { buildHelp } from './help'
 import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
 import { buildSectionView } from './section'
+import { buildSectionClip } from './section-plane'
 import { buildHistoryPanel } from './history-panel'
 import { buildAlignmentGuides } from './guides'
 import { buildLayerPreview } from './layers'
@@ -42,6 +43,7 @@ buildPanel($('#panel'), $('#statusbar'), doc)
 buildToolsPanel($('#panel').appendChild(document.createElement('section')), $('#statusbar'), doc)
 buildPrintCheck($('#toolbar'), $('#panel'), $('#statusbar'), doc)
 buildSectionView($('#toolbar'), view, doc, $('#statusbar'))
+buildSectionClip($('#toolbar'), view, doc, $('#statusbar'))
 buildContextMenu($('#scene'), doc, $('#statusbar'))
 buildStats($('#scene'), doc)
 buildHelp($('#toolbar'))
