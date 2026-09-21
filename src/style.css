@@ -686,3 +686,31 @@ button:disabled {
   pointer-events: none;
 }
 .coord-readout:empty { display: none; }
+
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(10 12 16 / 0.7);
+}
+.welcome-panel {
+  width: min(520px, 90vw);
+  padding: 28px 30px 22px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.55);
+  color: var(--text);
+}
+.welcome-panel h2 { margin: 0 0 10px; font-size: 22px; font-weight: 600; }
+.welcome-panel p  { margin: 0 0 22px; font-size: 14px; line-height: 1.55; color: var(--muted); }
+.welcome-dots { display: flex; gap: 6px; margin-bottom: 18px; }
+.welcome-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.welcome-dots .dot.active { background: var(--accent); }
+.welcome-nav { display: flex; justify-content: space-between; gap: 8px; }
+.welcome-nav button { padding: 8px 16px; }
+.welcome-nav button.primary { color: #101318; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.welcome-nav button.primary:hover { background: #6ab5ff; border-color: #6ab5ff; }

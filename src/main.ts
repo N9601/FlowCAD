@@ -27,6 +27,7 @@ import { buildUnitsToggle } from './units-ui'
 import { buildToolbar } from './toolbar'
 import { buildToolsPanel } from './toolspanel'
 import { Viewport } from './viewport'
+import { buildWelcome } from './welcome'
 
 const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!
 
@@ -67,3 +68,4 @@ doc.addEventListener('saved-state', () => {
 buildHistoryPanel($('#toolbar'), doc, $('#statusbar'))
 buildLayerPreview($('#toolbar'), doc, $('#statusbar'))
 buildAlignmentGuides(view, doc)
+buildWelcome()

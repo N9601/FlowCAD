@@ -1,7 +1,9 @@
 {
   "name": "flowcad",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Browser-based parametric 3D CAD modeler. Everything runs client-side.",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
