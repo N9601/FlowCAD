@@ -673,3 +673,16 @@ button:disabled {
 .toast-success { background: #1f6f3d; border-color: #2a8a4f; }
 .toast-warn    { background: #8a6d1e; border-color: #a5842a; }
 .toast-error   { background: #8a2c2c; border-color: #a53838; }
+
+.coord-readout {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgb(16 19 24 / 0.65);
+  color: var(--muted);
+  font: 11px/1.3 ui-monospace, Consolas, monospace;
+  pointer-events: none;
+}
+.coord-readout:empty { display: none; }

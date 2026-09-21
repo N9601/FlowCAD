@@ -15,6 +15,7 @@ import { buildNavCube } from './navcube'
 import { buildHelp } from './help'
 import { buildPrintCheck } from './printpanel'
 import { buildStats } from './stats'
+import { buildCoordReadout } from './coord-readout'
 import { buildSectionView } from './section'
 import { buildSectionClip } from './section-plane'
 import { buildHistoryPanel } from './history-panel'
@@ -46,6 +47,7 @@ buildSectionView($('#toolbar'), view, doc, $('#statusbar'))
 buildSectionClip($('#toolbar'), view, doc, $('#statusbar'))
 buildContextMenu($('#scene'), doc, $('#statusbar'))
 buildStats($('#scene'), doc)
+buildCoordReadout($('#scene'), view, doc)
 buildHelp($('#toolbar'))
 buildCommandPalette(doc, view, $('#statusbar'))
 buildDrawTools($('#toolbar'), view, doc, $('#statusbar'))
