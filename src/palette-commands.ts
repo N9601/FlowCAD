@@ -125,6 +125,27 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
   push('edit.ungroup', 'Ungroup', 'unlink', requireSelection('any', () => doc.ungroupSelection()))
   push('edit.hide', 'Hide selection', 'invisible', requireSelection('any', () => doc.selection.forEach((o) => o.visible && doc.toggleVisible(o))))
   push('edit.show-all', 'Show all objects', 'unhide reveal', () => doc.objects.forEach((o) => !o.visible && doc.toggleVisible(o)))
+  const alignAxis = (axis: 'x' | 'y' | 'z', anchor: 'min' | 'center' | 'max') => requireSelection('two', () => {
+    const box = new THREE.Box3()
+    const anchors = doc.selection.map((o) => {
+      const b = new THREE.Box3().setFromObject(o.mesh)
+      return { obj: o, b }
+    })
+    for (const { b } of anchors) box.union(b)
+    const target = anchor === 'min' ? box.min[axis] : anchor === 'max' ? box.max[axis] : (box.min[axis] + box.max[axis]) / 2
+    for (const { obj, b } of anchors) {
+      const current = anchor === 'min' ? b.min[axis] : anchor === 'max' ? b.max[axis] : (b.min[axis] + b.max[axis]) / 2
+      obj.mesh.position[axis] += target - current
+    }
+    doc.commit()
+    status.textContent = `Aligned ${anchors.length} objects to ${anchor} on ${axis.toUpperCase()}`
+  })
+  for (const axis of ['x', 'y', 'z'] as const) {
+    for (const anchor of ['min', 'center', 'max'] as const) {
+      push(`edit.align.${axis}.${anchor}`, `Align ${axis.toUpperCase()} ${anchor}`, `align distribute snap edge center`, alignAxis(axis, anchor))
+    }
+  }
+
   push('edit.isolate', 'Isolate selection', 'hide others focus solo', requireSelection('any', () => {
     const keep = new Set(doc.selection)
     let hidden = 0
