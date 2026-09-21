@@ -31,6 +31,30 @@ import { buildWelcome } from './welcome'
 
 const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!
 
+/**
+ * Global overlay panic switch. Any Escape press or any click on an overlay backdrop
+ * hides every modal in the app, regardless of which one owns the event. Registered
+ * before anything else so no downstream listener can swallow it.
+ */
+const OVERLAY_SEL = '.palette-overlay, .help-overlay, .welcome-overlay, .context-menu'
+const hideAllOverlays = () => {
+  document.querySelectorAll(OVERLAY_SEL).forEach((el) => {
+    ;(el as HTMLElement).hidden = true
+  })
+}
+document.addEventListener(
+  'keydown',
+  (e) => {
+    if (e.key === 'Escape' && document.querySelector(`${OVERLAY_SEL.split(',').map((s) => `${s.trim()}:not([hidden])`).join(', ')}`)) {
+      hideAllOverlays()
+      e.preventDefault()
+      e.stopPropagation()
+    }
+  },
+  true,
+)
+;(window as unknown as { hideOverlays: () => void }).hideOverlays = hideAllOverlays
+
 const view = new Viewport($('#scene'))
 const doc = new CadDocument(view)
 // Exposed for the browser console: `flowcad.doc.serialize()` and similar.

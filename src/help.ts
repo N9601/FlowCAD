@@ -35,6 +35,9 @@ export function buildHelp(toolbar: HTMLElement) {
   const overlay = document.body.appendChild(el('div', 'help-overlay'))
   overlay.hidden = true
   const panel = overlay.appendChild(el('div', 'help-panel'))
+  const x = panel.appendChild(el('button', 'overlay-close', '×'))
+  x.title = 'Close (Esc)'
+  x.addEventListener('click', () => (overlay.hidden = true))
   panel.appendChild(el('h2', undefined, 'FlowCAD shortcuts'))
   const table = panel.appendChild(el('table'))
   for (const [key, description] of SHORTCUTS) {

@@ -26,6 +26,12 @@ export function buildCommandPalette(doc: CadDocument, view: Viewport, status: HT
   const overlay = document.body.appendChild(el('div', 'palette-overlay'))
   overlay.hidden = true
   const panel = overlay.appendChild(el('div', 'palette-panel'))
+  const x = document.createElement('button')
+  x.className = 'overlay-close'
+  x.textContent = '×'
+  x.title = 'Close (Esc)'
+  x.addEventListener('mousedown', (e) => { e.preventDefault(); overlay.hidden = true })
+  panel.appendChild(x)
   const input = panel.appendChild(el('input'))
   input.placeholder = 'Type a command...'
   input.type = 'text'
