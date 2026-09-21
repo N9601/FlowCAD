@@ -12,6 +12,7 @@ import { csg } from './csg/client'
 import { download, encodeBinaryStl } from './io/stl'
 import type { Viewport } from './viewport'
 import { addShape } from './actions'
+import * as THREE from 'three'
 import { settleWithPhysics } from './physics'
 import { encodeStandaloneHtml } from './io/html'
 import { recordTurntable } from './record'
@@ -88,6 +89,37 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
   })
   push('edit.redo', 'Redo', 'forward history', () => doc.redo())
   push('edit.duplicate', 'Duplicate', 'copy clone', requireSelection('any', () => doc.duplicate()))
+
+  const arrayLinear = (axis: 'x' | 'y' | 'z', axisName: string) => requireSelection('any', () => {
+    const countStr = prompt(`Array along ${axisName}: how many copies (including original)?`, '5')
+    if (!countStr) return
+    const count = Math.max(2, Math.floor(+countStr))
+    const spacingStr = prompt(`Spacing between copies in mm?`, '20')
+    if (!spacingStr) return
+    const spacing = +spacingStr
+    if (!isFinite(spacing) || spacing === 0) throw new Error('Spacing must be a nonzero number')
+    const dir = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
+    const copies = doc.arrayLinear([...doc.selection], dir, count, spacing)
+    status.textContent = `Array on ${axisName}: added ${copies.length} copies`
+  })
+  push('edit.array.x', 'Array along X', 'linear pattern grid repeat clone', arrayLinear('x', 'X'))
+  push('edit.array.y', 'Array along Y', 'linear pattern grid repeat clone', arrayLinear('y', 'Y'))
+  push('edit.array.z', 'Array along Z', 'linear pattern grid repeat clone stack', arrayLinear('z', 'Z'))
+
+  push('edit.array.polar', 'Polar array (around Z)', 'circular pattern rotate clone repeat', requireSelection('any', () => {
+    const countStr = prompt('Polar array: how many total copies (including original)?', '6')
+    if (!countStr) return
+    const count = Math.max(2, Math.floor(+countStr))
+    const angleStr = prompt('Total sweep in degrees (360 for full circle)?', '360')
+    if (!angleStr) return
+    const totalDeg = +angleStr
+    if (!isFinite(totalDeg) || totalDeg === 0) throw new Error('Angle must be nonzero')
+    const box = new THREE.Box3()
+    for (const o of doc.selection) box.expandByObject(o.mesh)
+    const centre = box.getCenter(new THREE.Vector3())
+    const copies = doc.arrayPolar([...doc.selection], centre, count, totalDeg)
+    status.textContent = `Polar array: added ${copies.length} copies across ${totalDeg} deg`
+  }))
   push('edit.delete', 'Delete', 'remove erase', requireSelection('any', () => { doc.remove([...doc.selection]); doc.commit() }))
   push('edit.group', 'Group selection', 'link together', requireSelection('two', () => { doc.groupSelection() }))
   push('edit.ungroup', 'Ungroup', 'unlink', requireSelection('any', () => doc.ungroupSelection()))

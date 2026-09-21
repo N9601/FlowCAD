@@ -369,6 +369,58 @@ export class CadDocument extends EventTarget {
     return this.insert({ id: this.nextId++, name: `${src.name} copy`, color: src.color, visible: src.visible, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
   }
 
+  /**
+   * Linear array: for each source object, produce `count-1` copies offset by `direction*spacing*i`.
+   * Selects the produced copies and commits.
+   */
+  arrayLinear(sources: SceneObject[], direction: THREE.Vector3, count: number, spacing: number): SceneObject[] {
+    const step = direction.clone().normalize().multiplyScalar(spacing)
+    const copies: SceneObject[] = []
+    for (const src of sources) {
+      src.mesh.updateMatrix()
+      for (let i = 1; i < count; i++) {
+        const matrix = src.mesh.matrix.clone()
+        matrix.elements[12] += step.x * i
+        matrix.elements[13] += step.y * i
+        matrix.elements[14] += step.z * i
+        const copy = this.cloneAt(src, matrix)
+        copy.name = src.name
+        copies.push(copy)
+      }
+    }
+    if (copies.length > 0) {
+      this.select(copies)
+      this.commit()
+    }
+    return copies
+  }
+
+  /**
+   * Polar array around Z through `center`: for each source object, produce `count-1` rotated copies
+   * distributed across `totalDeg` degrees.
+   */
+  arrayPolar(sources: SceneObject[], center: THREE.Vector3, count: number, totalDeg: number): SceneObject[] {
+    const copies: SceneObject[] = []
+    for (const src of sources) {
+      src.mesh.updateMatrix()
+      for (let i = 1; i < count; i++) {
+        const angle = (totalDeg * Math.PI / 180) * (i / (count - 1))
+        const rot = new THREE.Matrix4().makeRotationZ(angle)
+        const toOrigin = new THREE.Matrix4().makeTranslation(-center.x, -center.y, -center.z)
+        const back = new THREE.Matrix4().makeTranslation(center.x, center.y, center.z)
+        const matrix = back.multiply(rot).multiply(toOrigin).multiply(src.mesh.matrix)
+        const copy = this.cloneAt(src, matrix)
+        copy.name = src.name
+        copies.push(copy)
+      }
+    }
+    if (copies.length > 0) {
+      this.select(copies)
+      this.commit()
+    }
+    return copies
+  }
+
   /** Copies the selection, offset along X so the copies are visible. */
   duplicate() {
     const copies = this.selection.map((src) => {
