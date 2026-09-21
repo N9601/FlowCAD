@@ -1,5 +1,6 @@
 import type { CadDocument } from './document'
 import { runScript, SHOWCASE_ARCH_SCRIPT, SHOWCASE_MECH_SCRIPT, SHOWCASE_NYC_SCRIPT, SHOWCASE_SCRIPT, STARTER_SCRIPT } from './script'
+import { toast } from './toast'
 import type { Viewport } from './viewport'
 
 const STORAGE_KEY = 'flowcad.script'
@@ -47,10 +48,14 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
     const started = performance.now()
     try {
       await runScript(editor.value, doc, view, (line) => (output.textContent += `${line}\n`))
-      output.textContent += `Done in ${(performance.now() - started).toFixed(0)} ms, ${doc.objects.length} object(s) in scene.`
+      const ms = (performance.now() - started).toFixed(0)
+      output.textContent += `Done in ${ms} ms, ${doc.objects.length} object(s) in scene.`
+      toast(`Script ran: ${doc.objects.length} object(s) in ${ms} ms`, 'success')
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
       output.className = 'error'
-      output.textContent += `Error: ${err instanceof Error ? err.message : err}`
+      output.textContent += `Error: ${msg}`
+      toast(`Script error: ${msg}`, 'error')
     } finally {
       run.disabled = false
     }

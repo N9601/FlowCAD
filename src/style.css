@@ -636,3 +636,37 @@ button:disabled {
   background: var(--panel);
   border-top: 1px solid var(--border);
 }
+
+.toasts {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 5000;
+  pointer-events: none;
+  max-width: 90vw;
+}
+.toast {
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: #2a2f38;
+  border: 1px solid #3a4048;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  max-width: 460px;
+  word-wrap: break-word;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { background: #1f6f3d; border-color: #2a8a4f; }
+.toast-warn    { background: #8a6d1e; border-color: #a5842a; }
+.toast-error   { background: #8a2c2c; border-color: #a53838; }

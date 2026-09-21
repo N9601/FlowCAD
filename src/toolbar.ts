@@ -11,6 +11,7 @@ import { encodeBlueprint } from './io/blueprint'
 import { encodeStandaloneHtml } from './io/html'
 import { encodeDxf, encodeSvg } from './io/section'
 import { decodeStl, download, encodeBinaryStl } from './io/stl'
+import { toast } from './toast'
 
 const BOOLEANS: { label: string; op: BooleanOp }[] = [
   { label: 'Union', op: 'union' },
@@ -31,7 +32,9 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       try {
         await action()
       } catch (err) {
-        status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+        const msg = err instanceof Error ? err.message : String(err)
+        status.textContent = `Error: ${msg}`
+        toast(msg, 'error')
       }
     })
     return parent.appendChild(el)
@@ -140,7 +143,9 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     try {
       await importFiles(picker.files ?? [])
     } catch (err) {
-      status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+      const msg = err instanceof Error ? err.message : String(err)
+      status.textContent = `Error: ${msg}`
+      toast(msg, 'error')
     }
     picker.value = ''
   })
@@ -152,7 +157,9 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     try {
       await importFiles(e.dataTransfer?.files ?? [])
     } catch (err) {
-      status.textContent = `Error: ${err instanceof Error ? err.message : err}`
+      const msg = err instanceof Error ? err.message : String(err)
+      status.textContent = `Error: ${msg}`
+      toast(msg, 'error')
     }
   })
   needsAny.push(
