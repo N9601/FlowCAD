@@ -125,6 +125,14 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
   push('edit.ungroup', 'Ungroup', 'unlink', requireSelection('any', () => doc.ungroupSelection()))
   push('edit.hide', 'Hide selection', 'invisible', requireSelection('any', () => doc.selection.forEach((o) => o.visible && doc.toggleVisible(o))))
   push('edit.show-all', 'Show all objects', 'unhide reveal', () => doc.objects.forEach((o) => !o.visible && doc.toggleVisible(o)))
+  push('edit.isolate', 'Isolate selection', 'hide others focus solo', requireSelection('any', () => {
+    const keep = new Set(doc.selection)
+    let hidden = 0
+    for (const o of doc.objects) {
+      if (o.visible && !keep.has(o)) { doc.toggleVisible(o); hidden++ }
+    }
+    status.textContent = `Isolated ${keep.size} object(s); hid ${hidden}`
+  }))
 
   push('view.fit', 'Fit view', 'zoom frame', () => view.frame(doc.frameTargets))
   push('view.iso', 'Iso view', 'perspective', () => view.frame(doc.frameTargets, 'iso'))

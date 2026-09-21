@@ -8,6 +8,7 @@ const SHORTCUTS: [string, string][] = [
   ['C', 'Toggle live cross-section'],
   ['M', 'Toggle measure tool'],
   ['B', 'Drop selection to the bed'],
+  ['Ctrl+A', 'Select all objects'],
   ['Ctrl+D', 'Duplicate selection'],
   ['Ctrl+C / Ctrl+V', 'Copy / paste selection to the system clipboard'],
   ['Del / Backspace', 'Delete selection'],

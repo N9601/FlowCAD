@@ -103,6 +103,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
       if (key === 'z' && !e.shiftKey) doc.undo()
       else if (key === 'y' || (key === 'z' && e.shiftKey)) doc.redo()
       else if (key === 'd') doc.duplicate()
+      else if (key === 'a') doc.select([...doc.objects])
       else return
       e.preventDefault()
     } else if (key === 'delete' || key === 'backspace') deleteSelection()
