@@ -733,3 +733,9 @@ button:disabled {
 }
 .overlay-close:hover { color: var(--text); border-color: var(--accent); }
 .palette-panel, .help-panel, .welcome-panel { position: relative; }
+
+/* Force hidden attribute to actually hide overlays; author CSS above uses display:flex which
+   would otherwise beat the browser's built-in [hidden] { display: none } rule. */
+.palette-overlay[hidden],
+.help-overlay[hidden],
+.welcome-overlay[hidden] { display: none !important; }
