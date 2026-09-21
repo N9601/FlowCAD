@@ -113,7 +113,32 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     else if (key === 'x') doc.toggleXray()
     else if (key === 'f') view.frame(doc.frameTargets)
     else if (key in VIEW_KEYS) view.frame(doc.frameTargets, VIEW_KEYS[key])
+    else if (nudge(e)) e.preventDefault()
   })
+
+  /** Move current selection by the snap distance in the arrow direction; Shift for 10x. */
+  function nudge(e: KeyboardEvent): boolean {
+    if (doc.selection.length === 0) return false
+    const step = (+snap.value || 1) * (e.shiftKey ? 10 : 1)
+    let dx = 0, dy = 0, dz = 0
+    switch (e.key) {
+      case 'ArrowLeft':  dx = -step; break
+      case 'ArrowRight': dx =  step; break
+      case 'ArrowDown':  dy = -step; break
+      case 'ArrowUp':    dy =  step; break
+      case 'PageDown':   dz = -step; break
+      case 'PageUp':     dz =  step; break
+      default: return false
+    }
+    for (const o of doc.selection) {
+      o.mesh.position.x += dx
+      o.mesh.position.y += dy
+      o.mesh.position.z += dz
+    }
+    doc.commit()
+    status.textContent = `Nudged by (${dx}, ${dy}, ${dz}) mm`
+    return true
+  }
 
   const file = group()
   needsAny.push(

@@ -11,6 +11,7 @@ const SHORTCUTS: [string, string][] = [
   ['Ctrl+D', 'Duplicate selection'],
   ['Ctrl+C / Ctrl+V', 'Copy / paste selection to the system clipboard'],
   ['Del / Backspace', 'Delete selection'],
+  ['Arrows / PgUp / PgDn', 'Nudge selection by snap in X / Y / Z (Shift = 10x)'],
   ['Ctrl+Z / Ctrl+Y', 'Undo / Redo'],
   ['Esc', 'Clear selection or exit a tool'],
   ['Click', 'Select an object (whole group if grouped)'],
