@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5183` in any modern browser. The app boots into a welcome tour on first visit; hit **?** any time for shortcuts or **Ctrl+K** for the command palette.
+Open `http://localhost:5173` in any modern browser. The app boots into a welcome tour on first visit; hit **?** any time for shortcuts or **Ctrl+K** for the command palette.
 
 **2. First model in five lines:**
 
@@ -69,7 +69,7 @@ One tab. Your machine. Watertight geometry.
 <td width="50%" valign="top">
 
 ### Modeling
-- **25+ parametric primitives** across three categories (basic, more solids, mechanical)
+- **24 parametric primitives** across three categories (basic, more solids, mechanical)
 - **Booleans:** union, subtract, intersect on any number of parts
 - **Fillet and chamfer** on any object via Manifold Minkowski
 - **Non-destructive history:** every op keeps its input tree; change a hole's size or engraved text after the cut
@@ -248,7 +248,7 @@ Scene autosaves to IndexedDB every commit and restores on reload.
 git clone https://github.com/N9601/FlowCAD.git
 cd FlowCAD
 npm install
-npm run dev            # http://localhost:5183
+npm run dev            # http://localhost:5173
 ```
 
 Build a production bundle:
