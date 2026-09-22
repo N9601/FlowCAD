@@ -35,7 +35,7 @@ npm run dev
 
 Open `http://localhost:5173` in any modern browser. The app boots into a welcome tour on first visit; hit **?** any time for shortcuts or **Ctrl+K** for the command palette.
 
-**2. First model in five lines:**
+**2. First model in six lines:**
 
 Open the **Script** drawer and paste:
 
@@ -128,18 +128,19 @@ Every shape is an async function that takes dimensions in mm and returns a `Part
 clear()
 
 // A geared plinth
-const plinth = await cylinder({ radius: 30, height: 10 })
-const gear   = (await gear({ teeth: 24, module: 2, thickness: 6 })).at(0, 0, 10)
-const plate  = await union(plinth, gear)
-plate.material('Brass').color('#c0864a')
+const base   = await cylinder({ radius: 36, height: 10 })
+const teeth  = (await gear({ teeth: 24, module: 2, thickness: 6 })).at(0, 0, 10)
+const plinth = await union(base, teeth)
 
-// A dozen countersunk holes in a polar array
-const hole = (await cylinder({ radius: 2, height: 20 })).at(22, 0, 0)
-const with_holes = plate
+// A ring of 12 bolt holes. rotate() turns a part about its own centre,
+// so each hole is placed by computing its position on the circle.
+const holes = []
 for (let i = 0; i < 12; i++) {
-  const clone = hole.clone().rotate(0, 0, i * 30)
-  await subtract(with_holes, clone)
+  const a = (i * 30 * Math.PI) / 180
+  holes.push((await cylinder({ radius: 2, height: 20 })).at(Math.cos(a) * 31, Math.sin(a) * 31, 5))
 }
+const plate = await subtract(plinth, ...holes)
+plate.name('Plinth').material('Brass').color('#c0864a')
 
 fit()
 ```
@@ -158,7 +159,7 @@ Every `Part` chains:
 | `.name('...')` | rename in the outliner |
 | `await .fillet(r)` `await .chamfer(r)` | edge treatments |
 
-Booleans (`union`, `subtract`, `intersect`) accept any number of parts. One script run is one undo step.
+Booleans (`union`, `subtract`, `intersect`) accept any number of parts and consume them, so keep working with the part they return. One script run is one undo step.
 
 **Bundled showcases:** planetary gear plinth, city block, mechanical bracket assembly, NYC skyline.
 
