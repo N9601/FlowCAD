@@ -6,6 +6,9 @@
   --muted: #8a93a0;
   --accent: #4da3ff;
   --shadow: rgb(0 0 0 / 0.4);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: var(--text);
 }
 
 :root.theme-light {
@@ -16,9 +19,6 @@
   --muted: #5e6773;
   --accent: #2c73d2;
   --shadow: rgb(0 0 0 / 0.15);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-size: 13px;
-  color: var(--text);
 }
 
 * {
