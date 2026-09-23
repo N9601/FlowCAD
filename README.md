@@ -264,6 +264,12 @@ Typecheck only:
 npx tsc --noEmit
 ```
 
+Run the unit tests (file import/export round trips, profile parsing, validation):
+
+```bash
+npm test
+```
+
 ---
 
 ## Project layout
@@ -305,6 +311,7 @@ FlowCAD/
 │   ├── storage.ts             IndexedDB autosave + snapshot history
 │   └── io/                    STL, OBJ, GLB, PLY, 3MF, SVG/DXF section, blueprint SVG,
 │                              standalone HTML viewer, .flowcad JSON, BOM CSV, ZIP, winding
+├── tests/                     Vitest unit tests for the file formats and geometry helpers
 ├── public/                    Static assets
 ├── index.html                 Vite entry
 ├── package.json               Vite + TypeScript + three + manifold-3d
