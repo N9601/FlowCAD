@@ -4,6 +4,15 @@
   "version": "1.0.0",
   "description": "Browser-based parametric 3D CAD modeler. Everything runs client-side.",
   "license": "MIT",
+  "author": "Nandhakishore Reddy",
+  "homepage": "https://github.com/N9601/FlowCAD#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/N9601/FlowCAD.git"
+  },
+  "bugs": {
+    "url": "https://github.com/N9601/FlowCAD/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
