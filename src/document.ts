@@ -55,16 +55,19 @@ const geometryCache = new WeakMap<SolidData, THREE.BufferGeometry>()
 
 const tintTmp = new THREE.Color()
 
+/** Writes the colour an object shows when it is not highlighted: its own colour times its material's tint. */
+function setBaseColor(target: THREE.Color, color: number, materialName: string | undefined) {
+  const { tint } = presetOf(materialName)
+  target.setHex(color)
+  if (tint !== undefined) target.multiply(tintTmp.setHex(tint))
+}
+
 /** Applies a material preset's PBR knobs (roughness/metalness/opacity/tint) to a mesh material. */
 export function applyMaterialPreset(material: THREE.MeshStandardMaterial, color: number, name: string | undefined) {
   const preset = presetOf(name)
   material.roughness = preset.roughness
   material.metalness = preset.metalness
-  if (preset.tint !== undefined) {
-    material.color.setHex(color).multiply(tintTmp.setHex(preset.tint))
-  } else {
-    material.color.setHex(color)
-  }
+  setBaseColor(material.color, color, name)
   material.transparent = preset.opacity !== undefined && preset.opacity < 1
   material.opacity = preset.opacity ?? 1
   material.depthWrite = !material.transparent
@@ -266,16 +269,20 @@ export class CadDocument extends EventTarget {
 
   select(objs: readonly SceneObject[]) {
     this.selection.splice(0, this.selection.length, ...objs)
-    for (const obj of this.objects) {
-      const rank = this.selection.indexOf(obj)
-      obj.mesh.material.color.setHex(rank === -1 ? obj.color : rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
-    }
+    for (const obj of this.objects) this.paintSelection(obj)
     // Highlighted silhouette around every selected object; the second colour is only for the tool half of a boolean pair.
     this.view.outlinePass.selectedObjects = this.selection.map((obj) => obj.mesh)
     const last = this.selection.at(-1)
     if (last) this.gizmo.attach(last.mesh)
     else this.gizmo.detach()
     this.dispatchEvent(new Event('change'))
+  }
+
+  /** Colours an object by selection rank: boolean target, tool, or its own (tinted) colour. */
+  private paintSelection(obj: SceneObject) {
+    const rank = this.selection.indexOf(obj)
+    if (rank === -1) setBaseColor(obj.mesh.material.color, obj.color, obj.material)
+    else obj.mesh.material.color.setHex(rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
   }
 
   /** Meshes to frame: the selection, or everything when nothing is selected. */
@@ -493,8 +500,7 @@ export class CadDocument extends EventTarget {
     let hovered: SceneObject | undefined
     const clearHover = () => {
       if (!hovered) return
-      const rank = this.selection.indexOf(hovered)
-      hovered.mesh.material.color.setHex(rank === -1 ? hovered.color : rank === 0 ? COLOR_PRIMARY : COLOR_SECONDARY)
+      this.paintSelection(hovered)
       hovered.mesh.material.emissive.setHex(0)
       hovered = undefined
     }
