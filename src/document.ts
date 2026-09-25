@@ -377,7 +377,7 @@ export class CadDocument extends EventTarget {
 
   /** Adds a copy of `src` at the given world matrix. Does not select it or record an undo step. */
   cloneAt(src: SceneObject, matrix: THREE.Matrix4): SceneObject {
-    return this.insert({ id: this.nextId++, name: `${src.name} copy`, color: src.color, visible: src.visible, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
+    return this.insert({ id: this.nextId++, name: `${src.name} copy`, color: src.color, visible: src.visible, material: src.material, solid: src.solid, spec: src.spec, tree: src.tree, matrix })
   }
 
   /**

@@ -350,6 +350,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
             name: child.name,
             color: obj.color,
             visible: obj.visible,
+            material: obj.material,
             solid: child.solid ?? (await csg.evaluate(local)),
             spec: child.spec,
             tree: child.op ? local : undefined,
