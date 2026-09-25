@@ -368,6 +368,8 @@ export class CadDocument extends EventTarget {
   load(saved: SavedDocument) {
     const snapshot: Snapshot = saved.map((s) => ({ ...s, matrix: new THREE.Matrix4().fromArray(s.matrix) }))
     this.nextId = Math.max(0, ...saved.map((s) => s.id)) + 1
+    // New groups must not reuse an id already in the loaded scene, or they would merge with it.
+    this.nextGroupId = Math.max(0, ...saved.map((s) => s.groupId ?? 0)) + 1
     this.history = [snapshot]
     this.cursor = 0
     this.restore(snapshot)
