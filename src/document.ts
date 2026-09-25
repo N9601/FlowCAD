@@ -247,7 +247,7 @@ export class CadDocument extends EventTarget {
     mesh.receiveShadow = true
     applyMaterialPreset(mesh.material, state.color, state.material)
     matrix.decompose(mesh.position, mesh.quaternion, mesh.scale)
-    this.applyXray(mesh.material)
+    this.applyXray(mesh.material, state.material)
     mesh.visible = state.visible
     const obj: SceneObject = { ...state, mesh }
     this.objects.push(obj)
@@ -292,13 +292,15 @@ export class CadDocument extends EventTarget {
 
   toggleXray() {
     this.xray = !this.xray
-    for (const obj of this.objects) this.applyXray(obj.mesh.material)
+    for (const obj of this.objects) this.applyXray(obj.mesh.material, obj.material)
   }
 
-  private applyXray(material: THREE.MeshStandardMaterial) {
-    material.transparent = this.xray
-    material.opacity = this.xray ? 0.35 : 1
-    material.depthWrite = !this.xray
+  /** X-ray overrides opacity while it is on; off, the material preset's own opacity (glass) applies again. */
+  private applyXray(material: THREE.MeshStandardMaterial, materialName: string | undefined) {
+    const opacity = this.xray ? 0.35 : (presetOf(materialName).opacity ?? 1)
+    material.transparent = opacity < 1
+    material.opacity = opacity
+    material.depthWrite = !material.transparent
     material.side = this.xray ? THREE.DoubleSide : THREE.FrontSide
     material.needsUpdate = true
   }
