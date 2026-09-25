@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { CadDocument } from './document'
+import { setClipPlane } from './section-plane'
 import type { Viewport } from './viewport'
 
 type Axis = 'x' | 'y' | 'z'
@@ -20,7 +21,6 @@ const PLANE_COLOR = 0xffd24d
 export function buildSectionView(toolbar: HTMLElement, view: Viewport, doc: CadDocument, status: HTMLElement) {
   view.renderer.localClippingEnabled = true
   const plane = new THREE.Plane()
-  const clip: THREE.Plane[] = [plane]
 
   const planeVisual = new THREE.Mesh(
     new THREE.PlaneGeometry(1, 1),
@@ -49,7 +49,7 @@ export function buildSectionView(toolbar: HTMLElement, view: Viewport, doc: CadD
   const updateMaterials = () => {
     for (const obj of doc.objects) {
       const material = obj.mesh.material
-      material.clippingPlanes = active ? clip : null
+      setClipPlane(material, plane, active)
       material.clipShadows = active
       // DoubleSide + clipping makes the cut interior visible; single-side gives a hollow silhouette.
       material.side = active ? THREE.DoubleSide : THREE.FrontSide

@@ -2,6 +2,12 @@ import * as THREE from 'three'
 import type { CadDocument } from './document'
 import type { Viewport } from './viewport'
 
+/** Adds or removes one clipping plane on a material, leaving planes set by other tools in place. */
+export function setClipPlane(material: THREE.Material, plane: THREE.Plane, on: boolean) {
+  const others = (material.clippingPlanes ?? []).filter((p) => p !== plane)
+  material.clippingPlanes = on ? [...others, plane] : others
+}
+
 /**
  * A horizontal clipping plane: everything above `z` is hidden from the renderer, letting the
  * viewer see interior features. A translucent quad visualises the cut level.
@@ -54,11 +60,7 @@ export class SectionPlane {
   }
 
   private apply() {
-    const planes = this.enabled ? [this.plane] : []
-    for (const o of this.doc.objects) {
-      const m = o.mesh.material as THREE.Material
-      m.clippingPlanes = planes
-    }
+    for (const o of this.doc.objects) setClipPlane(o.mesh.material, this.plane, this.enabled)
   }
 }
 
