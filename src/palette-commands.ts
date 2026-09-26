@@ -164,7 +164,6 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
   push('view.spin', 'Toggle spin', 'turntable rotate', () => view.setTurntable(view.isTurntableRunning() ? 0 : 20))
   push('view.record', 'Record turntable (WebM)', 'video capture animation spin', () => recordTurntable(view, status))
   push('view.snapshot', 'Snapshot to PNG', 'save image screenshot', () => {
-    download(new TextEncoder().encode('').buffer as ArrayBuffer, '') // no-op, real snap below
     const url = view.screenshot()
     const a = Object.assign(document.createElement('a'), { href: url, download: 'flowcad-view.png' })
     a.click()
