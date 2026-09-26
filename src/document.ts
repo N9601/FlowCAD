@@ -180,14 +180,27 @@ export class CadDocument extends EventTarget {
     this.bindPicking(view.renderer.domElement)
   }
 
-  /** Adds a solid whose vertices are in world space; the pivot is moved to its bounding-box centre. */
-  add(name: string, solid: SolidData, spec?: PrimitiveSpec): SceneObject {
+  /**
+   * Adds a solid whose vertices are in world space; the pivot is moved to its bounding-box centre.
+   * `from` passes on the colour, material and group of an object the new one replaces.
+   */
+  add(name: string, solid: SolidData, spec?: PrimitiveSpec, from?: Pick<SceneObject, 'color' | 'material' | 'groupId'>): SceneObject {
     const { box, centre } = recentre(solid)
     // New primitives are dropped on the origin, resting on the ground plane.
     if (spec) centre.set(0, 0, (box.max.z - box.min.z) / 2)
     const id = this.nextId++
-    const color = AUTO_PALETTE[(id - 1) % AUTO_PALETTE.length]
-    const obj = this.insert({ id, name: `${name} ${id}`, color, visible: true, solid, spec, matrix: new THREE.Matrix4().setPosition(centre) })
+    const color = from?.color ?? AUTO_PALETTE[(id - 1) % AUTO_PALETTE.length]
+    const obj = this.insert({
+      id,
+      name: `${name} ${id}`,
+      color,
+      material: from?.material,
+      groupId: from?.groupId,
+      visible: true,
+      solid,
+      spec,
+      matrix: new THREE.Matrix4().setPosition(centre),
+    })
     this.select([obj])
     return obj
   }

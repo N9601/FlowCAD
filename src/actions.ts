@@ -20,7 +20,8 @@ export async function roundEdges(doc: CadDocument, obj: SceneObject, op: 'fillet
   const tree: CsgNode = { name: `${label} ${radius}mm`, op, radius, children: [doc.nodeOf(obj)], matrix: IDENTITY }
   const solid = await csg.evaluate(tree)
   doc.remove([obj])
-  const result = doc.add(label, solid)
+  // Rounding edges modifies the part, so it keeps its colour, material and group.
+  const result = doc.add(label, solid, undefined, obj)
   result.tree = { ...tree, matrix: new Matrix4().setPosition(result.mesh.position.clone().negate()).toArray() }
   return result
 }
