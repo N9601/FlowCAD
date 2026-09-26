@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { CadDocument } from './document'
-import { analyse, DEFAULT_PRINT_SETTINGS, flaggedGeometry, plaGrams, type PrintSettings } from './printcheck'
+import { DEFAULT_MATERIAL, gramsOf } from './materials'
+import { analyse, DEFAULT_PRINT_SETTINGS, flaggedGeometry, type PrintSettings } from './printcheck'
 import { autoFix } from './printfix'
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -59,7 +60,8 @@ export function buildPrintCheck(toolbar: HTMLElement, panel: HTMLElement, status
     for (const obj of targets) {
       const report = analyse(obj, settings)
       totalIssues += report.issues.length
-      totalGrams += plaGrams(report.volume)
+      const grams = gramsOf(report.volume, obj.material)
+      totalGrams += grams
 
       const geometry = flaggedGeometry(obj, report.flags)
       if (geometry) {
@@ -71,7 +73,7 @@ export function buildPrintCheck(toolbar: HTMLElement, panel: HTMLElement, status
       const ok = report.issues.length === 0
       section.appendChild(el('h3', ok ? 'pass' : 'fail', `${ok ? 'Ready' : `${report.issues.length} issue${report.issues.length > 1 ? 's' : ''}`}: ${obj.name}`))
       for (const issue of report.issues) section.appendChild(el('p', 'issue', issue))
-      section.appendChild(el('p', 'hint', `Base area ${report.contactArea.toFixed(0)} mm2, about ${plaGrams(report.volume).toFixed(1)} g of PLA if solid`))
+      section.appendChild(el('p', 'hint', `Base area ${report.contactArea.toFixed(0)} mm2, about ${grams.toFixed(1)} g of ${obj.material ?? DEFAULT_MATERIAL} if solid`))
     }
 
     if (targets.length > 0) {

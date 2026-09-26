@@ -35,9 +35,6 @@ export interface PrintReport {
 
 const BED_TOLERANCE = 0.05
 const MAX_THICKNESS_SAMPLES = 20000
-const PLA_DENSITY = 1.24 // g/cm3
-
-export const plaGrams = (volumeMm3: number) => (volumeMm3 / 1000) * PLA_DENSITY
 
 export function analyse(obj: SceneObject, settings: PrintSettings): PrintReport {
   obj.mesh.updateMatrixWorld()
