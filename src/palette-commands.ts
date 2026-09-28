@@ -1,6 +1,6 @@
 import { chamfer, combine, fillet } from './actions'
 import { CATEGORIES } from './catalog'
-import type { CadDocument } from './document'
+import type { CadDocument, SceneObject } from './document'
 import { encodeBlueprint } from './io/blueprint'
 import { encodeBom } from './io/bom'
 import { encode3mf, encodeObj, type NamedPart } from './io/mesh-formats'
@@ -121,10 +121,19 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
     status.textContent = `Polar array: added ${copies.length} copies across ${totalDeg} deg`
   }))
   push('edit.delete', 'Delete', 'remove erase', requireSelection('any', () => { doc.remove([...doc.selection]); doc.commit() }))
-  push('edit.group', 'Group selection', 'link together', requireSelection('two', () => { doc.groupSelection() }))
-  push('edit.ungroup', 'Ungroup', 'unlink', requireSelection('any', () => doc.ungroupSelection()))
-  push('edit.hide', 'Hide selection', 'invisible', requireSelection('any', () => doc.selection.forEach((o) => o.visible && doc.toggleVisible(o))))
-  push('edit.show-all', 'Show all objects', 'unhide reveal', () => doc.objects.forEach((o) => !o.visible && doc.toggleVisible(o)))
+  /** Flips visibility of the given objects and records the change as one undo step. */
+  const toggleVisibility = (objects: readonly SceneObject[]) => {
+    for (const o of objects) doc.toggleVisible(o)
+    if (objects.length > 0) doc.commit()
+  }
+  push('edit.group', 'Group selection', 'link together', requireSelection('two', () => {
+    if (doc.groupSelection() !== undefined) doc.commit()
+  }))
+  push('edit.ungroup', 'Ungroup', 'unlink', requireSelection('any', () => {
+    if (doc.ungroupSelection()) doc.commit()
+  }))
+  push('edit.hide', 'Hide selection', 'invisible', requireSelection('any', () => toggleVisibility(doc.selection.filter((o) => o.visible))))
+  push('edit.show-all', 'Show all objects', 'unhide reveal', () => toggleVisibility(doc.objects.filter((o) => !o.visible)))
   const alignAxis = (axis: 'x' | 'y' | 'z', anchor: 'min' | 'center' | 'max') => requireSelection('two', () => {
     const box = new THREE.Box3()
     const anchors = doc.selection.map((o) => {
@@ -148,11 +157,9 @@ export function buildCommandRegistry(doc: CadDocument, view: Viewport, status: H
 
   push('edit.isolate', 'Isolate selection', 'hide others focus solo', requireSelection('any', () => {
     const keep = new Set(doc.selection)
-    let hidden = 0
-    for (const o of doc.objects) {
-      if (o.visible && !keep.has(o)) { doc.toggleVisible(o); hidden++ }
-    }
-    status.textContent = `Isolated ${keep.size} object(s); hid ${hidden}`
+    const others = doc.objects.filter((o) => o.visible && !keep.has(o))
+    toggleVisibility(others)
+    status.textContent = `Isolated ${keep.size} object(s); hid ${others.length}`
   }))
 
   push('view.fit', 'Fit view', 'zoom frame', () => view.frame(doc.frameTargets))

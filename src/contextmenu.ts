@@ -29,11 +29,16 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
   const canvas = viewport.querySelector('canvas')
   const target = canvas ?? viewport
 
+  // Visibility and grouping are part of the saved scene, so each change is committed as an undo step.
   const isolate = (obj: SceneObject) => {
-    for (const other of doc.objects) if (other !== obj && other.visible) doc.toggleVisible(other)
+    const others = doc.objects.filter((other) => other !== obj && other.visible)
+    for (const other of others) doc.toggleVisible(other)
+    if (others.length > 0) doc.commit()
   }
   const showAll = () => {
-    for (const obj of doc.objects) if (!obj.visible) doc.toggleVisible(obj)
+    const hidden = doc.objects.filter((obj) => !obj.visible)
+    for (const obj of hidden) doc.toggleVisible(obj)
+    if (hidden.length > 0) doc.commit()
   }
 
   const build = (obj: SceneObject | undefined) => {
@@ -79,7 +84,7 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
         entries.push({
           label: 'Group',
           action: () => {
-            doc.groupSelection()
+            if (doc.groupSelection() !== undefined) doc.commit()
           },
         })
       }
@@ -87,7 +92,7 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
         entries.push({
           label: 'Ungroup',
           action: () => {
-            doc.ungroupSelection()
+            if (doc.ungroupSelection()) doc.commit()
           },
         })
       }
@@ -98,7 +103,10 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
       })
       entries.push({
         label: selection.length === 1 && !selection[0].visible ? 'Show' : 'Hide',
-        action: () => selection.forEach((o) => doc.toggleVisible(o)),
+        action: () => {
+          selection.forEach((o) => doc.toggleVisible(o))
+          doc.commit()
+        },
       })
       entries.push({
         label: 'Delete',

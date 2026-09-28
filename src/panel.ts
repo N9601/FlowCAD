@@ -175,6 +175,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
       eye.addEventListener('click', (e) => {
         e.stopPropagation()
         doc.toggleVisible(obj)
+        doc.commit()
       })
       item.appendChild(el('span', 'name', obj.name))
       if (obj.groupId !== undefined) item.appendChild(el('span', 'tag', 'G' + obj.groupId))

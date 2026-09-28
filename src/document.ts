@@ -336,12 +336,13 @@ export class CadDocument extends EventTarget {
     return id
   }
 
-  /** Clears the group tag from every object that shares a group with any selected object. */
-  ungroupSelection() {
+  /** Clears the group tag from every object that shares a group with any selected object. Returns false if none was grouped. */
+  ungroupSelection(): boolean {
     const ids = new Set(this.selection.map((o) => o.groupId).filter((id): id is number => id !== undefined))
-    if (ids.size === 0) return
+    if (ids.size === 0) return false
     for (const obj of this.objects) if (obj.groupId !== undefined && ids.has(obj.groupId)) delete obj.groupId
     this.dispatchEvent(new Event('change'))
+    return true
   }
 
   /** Every object sharing any of the groups the given seeds belong to, plus the seeds themselves. */
