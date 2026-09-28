@@ -378,7 +378,7 @@ export class CadDocument extends EventTarget {
     return this.history[this.cursor].map((s) => ({ ...s, matrix: s.matrix.toArray() }))
   }
 
-  /** Replaces the scene with saved data and restarts the undo history from it. */
+  /** Replaces the scene with saved data, restarts the undo history from it and asks for it to be autosaved. */
   load(saved: SavedDocument) {
     const snapshot: Snapshot = saved.map((s) => ({ ...s, matrix: new THREE.Matrix4().fromArray(s.matrix) }))
     this.nextId = Math.max(0, ...saved.map((s) => s.id)) + 1
@@ -387,6 +387,7 @@ export class CadDocument extends EventTarget {
     this.history = [snapshot]
     this.cursor = 0
     this.restore(snapshot)
+    this.dispatchEvent(new Event('saved-state'))
   }
 
   /** Adds a copy of `src` at the given world matrix. Does not select it or record an undo step. */
