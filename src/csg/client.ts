@@ -3,6 +3,16 @@ import type { CsgNode, CsgRequest, CsgResponse, Outline, PlacedSolid, PrimitiveS
 const worker = new Worker(new URL('./csg.worker.ts', import.meta.url), { type: 'module' })
 const pending = new Map<number, { resolve: (r: never) => void; reject: (e: Error) => void }>()
 let nextId = 1
+/** Set once the worker has died, so later calls fail at once instead of waiting forever. */
+let failure: Error | undefined
+
+// The worker answers every request, even failed ones, so an error event here means it could not
+// load or has crashed. Nothing would ever reply, so reject what is outstanding.
+worker.onerror = (e) => {
+  failure = new Error(`The geometry kernel stopped (${e.message || 'the worker failed to load'}). Reload the page to restart it.`)
+  for (const p of pending.values()) p.reject(failure)
+  pending.clear()
+}
 
 worker.onmessage = (e: MessageEvent<CsgResponse>) => {
   const res = e.data
@@ -14,6 +24,7 @@ worker.onmessage = (e: MessageEvent<CsgResponse>) => {
 }
 
 function call<T = SolidData>(req: CsgRequest): Promise<T> {
+  if (failure) return Promise.reject(failure)
   const id = nextId++
   return new Promise<T>((resolve, reject) => {
     pending.set(id, { resolve, reject })
