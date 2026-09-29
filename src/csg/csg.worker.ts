@@ -19,10 +19,20 @@ const ready = Module({ locateFile: () => wasmUrl }).then((wasm) => {
 
 type Wasm = Awaited<typeof ready>
 
-let font: Font
+let font: Font | undefined
+let fontError: unknown
+// Only Text needs the font, so a failed download is reported there instead of failing every request.
 const fontReady = fetch(fontUrl)
-  .then((res) => res.arrayBuffer())
-  .then((data) => (font = parse(data)))
+  .then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res.arrayBuffer()
+  })
+  .then((data) => {
+    font = parse(data)
+  })
+  .catch((err: unknown) => {
+    fontError = err
+  })
 
 function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
   switch (spec.kind) {
@@ -117,6 +127,7 @@ function primitive(wasm: Wasm, spec: PrimitiveSpec): Manifold {
     case 'spring':
       return spring(wasm, spec.coilRadius, spec.wireRadius, spec.pitch, spec.turns, spec.segments)
     case 'text': {
+      if (!font) throw new Error(`The text font could not be loaded (${fontError instanceof Error ? fontError.message : String(fontError)})`)
       const contours = textContours(font, spec.text, spec.letterHeight)
       if (contours.length === 0) throw new Error('Text has no printable characters in this font')
       const outline = new wasm.CrossSection(contours, 'EvenOdd')
