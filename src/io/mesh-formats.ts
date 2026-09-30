@@ -42,10 +42,12 @@ export function encodeObj(parts: readonly NamedPart[]): ArrayBuffer {
 export function decodeObj(buffer: ArrayBuffer): SolidData {
   const vertices: number[][] = []
   const soup: number[] = []
-  for (const line of new TextDecoder().decode(buffer).split('\n')) {
+  for (const [n, line] of new TextDecoder().decode(buffer).split('\n').entries()) {
     const [tag, ...args] = line.trim().split(/\s+/)
     if (tag === 'v') {
-      vertices.push(args.slice(0, 3).map(Number))
+      const xyz = args.slice(0, 3).map(Number)
+      if (xyz.length < 3 || !xyz.every(Number.isFinite)) throw new Error(`OBJ line ${n + 1}: a vertex needs three numbers`)
+      vertices.push(xyz)
     } else if (tag === 'f') {
       const corners = args.map((arg) => {
         const index = parseInt(arg, 10)

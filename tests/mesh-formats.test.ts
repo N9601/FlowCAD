@@ -39,6 +39,11 @@ describe('OBJ', () => {
     expect(() => decodeObj(encode('v 0 0 0\nv 1 0 0\nf 1 2 3'))).toThrow('missing vertex')
   })
 
+  it('rejects vertices without three numbers', () => {
+    expect(() => decodeObj(encode('v 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3'))).toThrow('OBJ line 1: a vertex needs three numbers')
+    expect(() => decodeObj(encode('v 0 0 0\nv 1 0 x\nv 0 1 0\nf 1 2 3'))).toThrow('OBJ line 2')
+  })
+
   it('rejects files without faces', () => {
     expect(() => decodeObj(encode('v 0 0 0'))).toThrow('no faces')
   })

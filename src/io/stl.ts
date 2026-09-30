@@ -58,7 +58,7 @@ function readTriangleSoup(buffer: ArrayBuffer): Float32Array {
 /** Parses binary or ASCII STL into an indexed mesh. */
 export function decodeStl(buffer: ArrayBuffer): SolidData {
   const soup = readTriangleSoup(buffer)
-  if (soup.length === 0 || soup.length % 9 !== 0) throw new Error('Not a valid STL file')
+  if (soup.length === 0 || soup.length % 9 !== 0 || soup.some((n) => !Number.isFinite(n))) throw new Error('Not a valid STL file')
   return weld(soup)
 }
 

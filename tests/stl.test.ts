@@ -57,6 +57,11 @@ describe('ASCII STL', () => {
     expect(() => decodeStl(new TextEncoder().encode('solid empty\nendsolid empty').buffer as ArrayBuffer)).toThrow('Not a valid STL file')
     expect(() => decodeStl(new ArrayBuffer(10))).toThrow('Not a valid STL file')
   })
+
+  it('rejects vertices that are not numbers', () => {
+    const text = 'solid bad\nvertex 0 0 x\nvertex 1 0 0\nvertex 0 1 0\nendsolid bad'
+    expect(() => decodeStl(new TextEncoder().encode(text).buffer as ArrayBuffer)).toThrow('Not a valid STL file')
+  })
 })
 
 describe('weld', () => {
