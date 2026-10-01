@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { CadDocument } from './document'
+import { formatLength } from './units'
 import type { Viewport } from './viewport'
 
 const CLICK_SLOP_PX = 4
@@ -106,8 +107,8 @@ export function buildMeasure(toolbar: HTMLElement, view: Viewport, doc: CadDocum
     points.push(point)
     if (points.length === 2) {
       const d = points[1].clone().sub(points[0])
-      label.textContent = `${d.length().toFixed(2)} mm`
-      status.textContent = `Distance ${d.length().toFixed(2)} mm  (dX ${Math.abs(d.x).toFixed(2)}, dY ${Math.abs(d.y).toFixed(2)}, dZ ${Math.abs(d.z).toFixed(2)})`
+      label.textContent = formatLength(d.length())
+      status.textContent = `Distance ${formatLength(d.length())}  (dX ${formatLength(Math.abs(d.x))}, dY ${formatLength(Math.abs(d.y))}, dZ ${formatLength(Math.abs(d.z))})`
     } else {
       status.textContent = 'Measure: click the second point.'
     }

@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { addShape } from './actions'
 import type { CadDocument } from './document'
+import { formatLength } from './units'
 import type { Viewport } from './viewport'
 
 type Tool = 'rectangle' | 'circle' | null
@@ -56,7 +57,7 @@ export function buildDrawTools(toolbar: HTMLElement, view: Viewport, doc: CadDoc
       overlay.style.height = `${Math.abs(by - ay)}px`
       const dx = Math.abs(current.x - start.x)
       const dy = Math.abs(current.y - start.y)
-      overlay.textContent = `${dx.toFixed(1)} x ${dy.toFixed(1)} mm`
+      overlay.textContent = `${formatLength(dx, 1)} x ${formatLength(dy, 1)}`
     } else {
       const radius = Math.hypot(current.x - start.x, current.y - start.y)
       const pixelRadius = Math.hypot(bx - ax, by - ay)
@@ -65,7 +66,7 @@ export function buildDrawTools(toolbar: HTMLElement, view: Viewport, doc: CadDoc
       overlay.style.top = `${ay - pixelRadius}px`
       overlay.style.width = `${pixelRadius * 2}px`
       overlay.style.height = `${pixelRadius * 2}px`
-      overlay.textContent = `r ${radius.toFixed(1)} mm`
+      overlay.textContent = `r ${formatLength(radius, 1)}`
     }
     overlay.hidden = false
   }
