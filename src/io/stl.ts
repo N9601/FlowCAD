@@ -83,9 +83,10 @@ export function weld(soup: Float32Array): SolidData {
   return { positions: new Float32Array(positions), indices }
 }
 
-export function download(data: ArrayBuffer, filename: string) {
-  const url = URL.createObjectURL(new Blob([data]))
+export function download(data: ArrayBuffer | Blob, filename: string) {
+  const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]))
   const a = Object.assign(document.createElement('a'), { href: url, download: filename })
   a.click()
-  URL.revokeObjectURL(url)
+  // Revoking in the same task can cancel the download in some browsers (Safari in particular).
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }

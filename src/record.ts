@@ -1,3 +1,4 @@
+import { download } from './io/stl'
 import type { Viewport } from './viewport'
 
 const FRAMES_PER_SECOND = 30
@@ -36,10 +37,7 @@ export function recordTurntable(view: Viewport, status: HTMLElement): Promise<vo
     recorder.onstop = () => {
       view.setTurntable(wasSpinning ? TURN_DEGREES_PER_SECOND : 0)
       const blob = new Blob(chunks, { type: mimeType })
-      const url = URL.createObjectURL(blob)
-      const a = Object.assign(document.createElement('a'), { href: url, download: 'flowcad-turntable.webm' })
-      a.click()
-      URL.revokeObjectURL(url)
+      download(blob, 'flowcad-turntable.webm')
       status.textContent = `Turntable saved (${(blob.size / 1024).toFixed(0)} KB)`
       resolve()
     }
