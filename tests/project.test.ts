@@ -50,6 +50,17 @@ describe('.flowcad project files', () => {
     expect(() => decodeProject(new TextEncoder().encode('not json').buffer as ArrayBuffer)).toThrow('Not a valid .flowcad file')
     expect(() => decodeProject(encode({ generator: 'Other', version: 1, objects: [] }))).toThrow('not produced by FlowCAD')
     expect(() => decodeProject(encode({ generator: 'FlowCAD', version: 99, objects: [] }))).toThrow('format v99')
+    expect(() => decodeProject(encode({ generator: 'FlowCAD', version: 1 }))).toThrow('Not a valid .flowcad file')
+  })
+
+  it('rejects damaged objects with a clear message', () => {
+    const valid = JSON.parse(new TextDecoder().decode(encodeProject(scene.slice(1))))
+    const withObject = (patch: object) => encode({ ...valid, objects: [{ ...valid.objects[0], ...patch }] })
+    expect(() => decodeProject(withObject({ matrix: [1, 0, 0] }))).toThrow('missing its id or placement')
+    expect(() => decodeProject(withObject({ solid: undefined }))).toThrow('an object has no mesh')
+    expect(() => decodeProject(withObject({ solid: { positions: '%%%', indices: '' } }))).toThrow('cannot be decoded')
+    const outOfRange = btoa(String.fromCharCode(...new Uint8Array(new Uint32Array([0, 1, 99]).buffer)))
+    expect(() => decodeProject(withObject({ solid: { ...valid.objects[0].solid, indices: outOfRange } }))).toThrow('missing vertices')
   })
 })
 

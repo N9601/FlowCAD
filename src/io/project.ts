@@ -58,10 +58,23 @@ const packSolid = (solid: SolidData): SerializedSolid => ({
   indices: bytesToBase64(new Uint8Array(solid.indices.buffer, solid.indices.byteOffset, solid.indices.byteLength)),
 })
 
-const unpackSolid = (packed: SerializedSolid): SolidData => ({
-  positions: new Float32Array(base64ToBytes(packed.positions).buffer),
-  indices: new Uint32Array(base64ToBytes(packed.indices).buffer),
-})
+const damaged = (detail: string) => new Error(`This .flowcad file is damaged: ${detail}`)
+
+function unpackSolid(packed: SerializedSolid | undefined): SolidData {
+  if (typeof packed?.positions !== 'string' || typeof packed.indices !== 'string') throw damaged('an object has no mesh')
+  let solid: SolidData
+  try {
+    solid = {
+      positions: new Float32Array(base64ToBytes(packed.positions).buffer),
+      indices: new Uint32Array(base64ToBytes(packed.indices).buffer),
+    }
+  } catch {
+    throw damaged('mesh data cannot be decoded')
+  }
+  const vertices = solid.positions.length / 3
+  if (solid.indices.length % 3 !== 0 || solid.indices.some((i) => i >= vertices)) throw damaged('a mesh refers to missing vertices')
+  return solid
+}
 
 function packTree(tree: CsgNode): SerializedTree {
   return {
@@ -114,16 +127,22 @@ export function decodeProject(buffer: ArrayBuffer): SavedDocument {
   }
   if (file?.generator !== 'FlowCAD') throw new Error('This file was not produced by FlowCAD')
   if (file.version !== VERSION) throw new Error(`This file uses .flowcad format v${file.version}; this build reads v${VERSION}`)
-  return file.objects.map((o) => ({
-    id: o.id,
-    name: o.name,
-    color: o.color ?? 0x8fa3b8,
-    visible: o.visible !== false,
-    groupId: o.groupId,
-    material: o.material,
-    matrix: o.matrix,
-    solid: unpackSolid(o.solid),
-    spec: o.spec as SavedDocument[number]['spec'],
-    tree: o.tree ? unpackTree(o.tree) : undefined,
-  }))
+  if (!Array.isArray(file.objects)) throw new Error('Not a valid .flowcad file')
+  return file.objects.map((o) => {
+    if (!Number.isInteger(o?.id) || !Array.isArray(o.matrix) || o.matrix.length !== 16 || !o.matrix.every(Number.isFinite)) {
+      throw damaged('an object is missing its id or placement')
+    }
+    return {
+      id: o.id,
+      name: String(o.name ?? `Object ${o.id}`),
+      color: o.color ?? 0x8fa3b8,
+      visible: o.visible !== false,
+      groupId: o.groupId,
+      material: o.material,
+      matrix: o.matrix,
+      solid: unpackSolid(o.solid),
+      spec: o.spec as SavedDocument[number]['spec'],
+      tree: o.tree ? unpackTree(o.tree) : undefined,
+    }
+  })
 }
