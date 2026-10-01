@@ -1,4 +1,5 @@
 import type { CadDocument } from './document'
+import { readPref, writePref } from './prefs'
 import { runScript, SHOWCASE_ARCH_SCRIPT, SHOWCASE_MECH_SCRIPT, SHOWCASE_NYC_SCRIPT, SHOWCASE_SCRIPT, STARTER_SCRIPT } from './script'
 import { toast } from './toast'
 import type { Viewport } from './viewport'
@@ -22,7 +23,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   const close = header.appendChild(el('button', { textContent: 'Close' }))
 
   const editor = drawer.appendChild(el('textarea', { spellcheck: false }))
-  editor.value = localStorage.getItem(STORAGE_KEY) ?? STARTER_SCRIPT
+  editor.value = readPref(STORAGE_KEY) ?? STARTER_SCRIPT
   const output = drawer.appendChild(el('pre'))
 
   const toggle = toolbar
@@ -41,7 +42,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   nyc.addEventListener('click', () => (editor.value = SHOWCASE_NYC_SCRIPT))
 
   const execute = async () => {
-    localStorage.setItem(STORAGE_KEY, editor.value)
+    writePref(STORAGE_KEY, editor.value)
     run.disabled = true
     output.className = ''
     output.textContent = ''

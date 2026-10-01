@@ -1,3 +1,4 @@
+import { readPref, writePref } from './prefs'
 import type { Viewport } from './viewport'
 
 interface SavedView {
@@ -11,7 +12,7 @@ const MAX_VIEWS = 20
 
 function load(): SavedView[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readPref(STORAGE_KEY)
     return raw ? (JSON.parse(raw) as SavedView[]) : []
   } catch {
     return []
@@ -19,11 +20,7 @@ function load(): SavedView[] {
 }
 
 function save(views: SavedView[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(views))
-  } catch {
-    // Ignore quota errors; camera bookmarks are best-effort.
-  }
+  writePref(STORAGE_KEY, JSON.stringify(views))
 }
 
 /**

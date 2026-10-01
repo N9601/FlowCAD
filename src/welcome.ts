@@ -1,3 +1,5 @@
+import { readPref, writePref } from './prefs'
+
 const STORAGE_KEY = 'flowcad.welcomed'
 
 interface Step {
@@ -30,7 +32,7 @@ const STEPS: Step[] = [
 
 /** Shows a one-time onboarding modal on first visit. Skippable, and Escape closes it. */
 export function buildWelcome() {
-  if (localStorage.getItem(STORAGE_KEY) === 'yes') return
+  if (readPref(STORAGE_KEY) === 'yes') return
 
   const overlay = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'welcome-overlay' }))
   const panel = overlay.appendChild(Object.assign(document.createElement('div'), { className: 'welcome-panel' }))
@@ -54,7 +56,7 @@ export function buildWelcome() {
   }
 
   const close = () => {
-    localStorage.setItem(STORAGE_KEY, 'yes')
+    writePref(STORAGE_KEY, 'yes')
     overlay.remove()
     document.removeEventListener('keydown', onKey, true)
   }

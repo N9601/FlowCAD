@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { readPref, writePref } from './prefs'
 import type { Viewport } from './viewport'
 
 type Theme = 'dark' | 'light'
@@ -13,8 +14,7 @@ function applyTheme(theme: Theme, view: Viewport) {
 
 /** Toolbar button that toggles a light theme; the choice persists in localStorage. */
 export function buildTheme(toolbar: HTMLElement, view: Viewport) {
-  const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'dark'
-  let theme: Theme = stored === 'light' ? 'light' : 'dark'
+  let theme: Theme = readPref(STORAGE_KEY) === 'light' ? 'light' : 'dark'
   applyTheme(theme, view)
 
   const button = toolbar
@@ -25,10 +25,6 @@ export function buildTheme(toolbar: HTMLElement, view: Viewport) {
     theme = theme === 'light' ? 'dark' : 'light'
     applyTheme(theme, view)
     button.textContent = theme === 'light' ? 'Dark' : 'Light'
-    try {
-      localStorage.setItem(STORAGE_KEY, theme)
-    } catch {
-      // Best-effort persistence.
-    }
+    writePref(STORAGE_KEY, theme)
   })
 }

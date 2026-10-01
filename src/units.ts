@@ -1,9 +1,11 @@
+import { readPref, writePref } from './prefs'
+
 export type Units = 'mm' | 'in'
 
 const MM_PER_INCH = 25.4
 const STORAGE_KEY = 'flowcad.units'
 
-let current: Units = (localStorage.getItem(STORAGE_KEY) as Units | null) === 'in' ? 'in' : 'mm'
+let current: Units = readPref(STORAGE_KEY) === 'in' ? 'in' : 'mm'
 
 const listeners = new Set<() => void>()
 
@@ -20,11 +22,7 @@ export function getUnits(): Units {
 export function setUnits(next: Units) {
   if (next === current) return
   current = next
-  try {
-    localStorage.setItem(STORAGE_KEY, next)
-  } catch {
-    // Best-effort persistence.
-  }
+  writePref(STORAGE_KEY, next)
   for (const fn of listeners) fn()
 }
 
