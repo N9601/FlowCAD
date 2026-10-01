@@ -4,8 +4,11 @@ import { DEFAULT_MATERIAL, gramsOf } from '../materials'
 
 const csvCell = (value: string | number) => {
   const text = String(value)
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
+
+/** User-entered text. A leading = + - @ would run as a formula in a spreadsheet, so it is prefixed with '. */
+const textCell = (value: string) => csvCell(/^[=+\-@\t\r]/.test(value) ? `'${value}` : value)
 
 /** Bill of materials CSV: one row per object with name, colour, dimensions, volume (cm3), tris. */
 export function encodeBom(objects: readonly SceneObject[]): ArrayBuffer {
@@ -25,9 +28,9 @@ export function encodeBom(objects: readonly SceneObject[]): ArrayBuffer {
     }
     rows.push(
       [
-        csvCell(obj.name),
+        textCell(obj.name),
         '#' + obj.color.toString(16).padStart(6, '0'),
-        obj.material ?? DEFAULT_MATERIAL,
+        textCell(obj.material ?? DEFAULT_MATERIAL),
         csvCell(size.x.toFixed(2)),
         csvCell(size.y.toFixed(2)),
         csvCell(size.z.toFixed(2)),
