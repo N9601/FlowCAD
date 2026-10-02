@@ -214,6 +214,7 @@ export function buildToolbar(root: HTMLElement, status: HTMLElement, doc: CadDoc
     ply: encodePly,
   }
   const format = file.appendChild(document.createElement('select'))
+  format.title = 'Export format'
   for (const ext of Object.keys(exporters)) format.add(new Option(ext.toUpperCase(), ext))
   needsAny.push(
     button(file, 'Export', () => {

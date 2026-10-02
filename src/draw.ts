@@ -118,9 +118,11 @@ export function buildDrawTools(toolbar: HTMLElement, view: Viewport, doc: CadDoc
   const rectBtn = group.appendChild(Object.assign(document.createElement('button'), { textContent: 'Draw ▭', className: 'draw-button' }))
   rectBtn.dataset.tool = 'rectangle'
   rectBtn.title = 'Click and drag on the ground plane to place a Cube at that footprint.'
+  rectBtn.setAttribute('aria-label', 'Draw rectangle')
   const circBtn = group.appendChild(Object.assign(document.createElement('button'), { textContent: 'Draw ⬤', className: 'draw-button' }))
   circBtn.dataset.tool = 'circle'
   circBtn.title = 'Click a centre and drag to a radius to place a Cylinder.'
+  circBtn.setAttribute('aria-label', 'Draw circle')
   rectBtn.addEventListener('click', () => setTool(tool === 'rectangle' ? null : 'rectangle'))
   circBtn.addEventListener('click', () => setTool(tool === 'circle' ? null : 'circle'))
 

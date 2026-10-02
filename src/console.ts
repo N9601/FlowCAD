@@ -23,6 +23,7 @@ export function buildConsole(toolbar: HTMLElement, host: HTMLElement, doc: CadDo
   const close = header.appendChild(el('button', { textContent: 'Close' }))
 
   const editor = drawer.appendChild(el('textarea', { spellcheck: false }))
+  editor.setAttribute('aria-label', 'Script')
   editor.value = readPref(STORAGE_KEY) ?? STARTER_SCRIPT
   const output = drawer.appendChild(el('pre'))
 

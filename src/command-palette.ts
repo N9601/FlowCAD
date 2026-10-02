@@ -30,10 +30,12 @@ export function buildCommandPalette(doc: CadDocument, view: Viewport, status: HT
   x.className = 'overlay-close'
   x.textContent = '×'
   x.title = 'Close (Esc)'
+  x.setAttribute('aria-label', 'Close')
   x.addEventListener('mousedown', (e) => { e.preventDefault(); overlay.hidden = true })
   panel.appendChild(x)
   const input = panel.appendChild(el('input'))
   input.placeholder = 'Type a command...'
+  input.setAttribute('aria-label', 'Command')
   input.type = 'text'
   const results = panel.appendChild(el('ul', 'palette-results'))
 

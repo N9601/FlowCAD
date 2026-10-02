@@ -36,6 +36,7 @@ export function buildNamedViews(toolbar: HTMLElement, view: Viewport, status: HT
   const saveBtn = group.appendChild(Object.assign(document.createElement('button'), { textContent: 'Save view' }))
   const deleteBtn = group.appendChild(Object.assign(document.createElement('button'), { textContent: '×' }))
   deleteBtn.title = 'Delete the most recently saved view'
+  deleteBtn.setAttribute('aria-label', deleteBtn.title)
 
   const rebuild = () => {
     select.replaceChildren()

@@ -17,6 +17,7 @@ export function buildExplodeSlider(toolbar: HTMLElement, doc: CadDocument, statu
   const group = toolbar.appendChild(Object.assign(document.createElement('div'), { className: 'group field' }))
   group.append(Object.assign(document.createElement('span'), { textContent: 'Explode' }))
   const slider = group.appendChild(document.createElement('input'))
+  slider.setAttribute('aria-label', 'Explode')
   slider.type = 'range'
   slider.min = '0'
   slider.max = '200'

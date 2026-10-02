@@ -74,10 +74,12 @@ export function buildSectionView(toolbar: HTMLElement, view: Viewport, doc: CadD
   const controlsWrap = toolbar.appendChild(Object.assign(document.createElement('div'), { className: 'group section-controls' }))
   const toggle = controlsWrap.appendChild(Object.assign(document.createElement('button'), { textContent: 'Cross-section' }))
   const axisSelect = controlsWrap.appendChild(document.createElement('select'))
+  axisSelect.setAttribute('aria-label', 'Cross-section axis')
   for (const value of ['x', 'y', 'z']) axisSelect.add(new Option(value.toUpperCase(), value))
   axisSelect.value = axis
   axisSelect.hidden = true
   const slider = controlsWrap.appendChild(document.createElement('input'))
+  slider.setAttribute('aria-label', 'Cross-section position')
   slider.type = 'range'
   slider.step = '0.5'
   slider.hidden = true

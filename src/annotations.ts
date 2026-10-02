@@ -80,7 +80,7 @@ export function buildAnnotations(scene: HTMLElement, toolbar: HTMLElement, view:
     const id = nextId++
     const element = document.createElement('div')
     element.className = 'annotation'
-    element.innerHTML = `<span class="text"></span><button class="close" title="Delete">×</button>`
+    element.innerHTML = `<span class="text"></span><button class="close" title="Delete" aria-label="Delete note">×</button>`
     element.querySelector<HTMLSpanElement>('.text')!.textContent = text
     element.querySelector<HTMLButtonElement>('.close')!.addEventListener('click', () => remove(id))
     layer.appendChild(element)

@@ -13,6 +13,7 @@ export function buildLayerPreview(toolbar: HTMLElement, doc: CadDocument, status
   const group = toolbar.appendChild(Object.assign(document.createElement('div'), { className: 'group field' }))
   group.append(Object.assign(document.createElement('span'), { textContent: 'Layer' }))
   const layerInput = group.appendChild(document.createElement('input'))
+  layerInput.setAttribute('aria-label', 'Layer height (mm)')
   layerInput.type = 'number'
   layerInput.value = '2'
   layerInput.step = '0.1'
