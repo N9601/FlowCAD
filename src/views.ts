@@ -35,7 +35,7 @@ export function buildNamedViews(toolbar: HTMLElement, view: Viewport, status: HT
   select.title = 'Recall a saved camera view'
   const saveBtn = group.appendChild(Object.assign(document.createElement('button'), { textContent: 'Save view' }))
   const deleteBtn = group.appendChild(Object.assign(document.createElement('button'), { textContent: '×' }))
-  deleteBtn.title = 'Delete the currently selected view'
+  deleteBtn.title = 'Delete the most recently saved view'
 
   const rebuild = () => {
     select.replaceChildren()

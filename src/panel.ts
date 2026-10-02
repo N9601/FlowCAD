@@ -166,7 +166,7 @@ export function buildPanel(root: HTMLElement, status: HTMLElement, doc: CadDocum
 
   const renderList = () => {
     list.replaceChildren(el('h2', undefined, `Objects (${doc.objects.length})`))
-    if (doc.objects.length === 0) list.appendChild(el('p', 'hint', 'Add a primitive from the toolbar.'))
+    if (doc.objects.length === 0) list.appendChild(el('p', 'hint', 'Add a shape from the palette on the left.'))
     for (const obj of doc.objects) {
       const rank = doc.selection.indexOf(obj)
       const item = list.appendChild(el('div', `item${rank === 0 ? ' primary' : rank > 0 ? ' secondary' : ''}${obj.visible ? '' : ' hidden'}`))
