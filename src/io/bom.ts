@@ -10,7 +10,7 @@ const csvCell = (value: string | number) => {
 /** User-entered text. A leading = + - @ would run as a formula in a spreadsheet, so it is prefixed with '. */
 const textCell = (value: string) => csvCell(/^[=+\-@\t\r]/.test(value) ? `'${value}` : value)
 
-/** Bill of materials CSV: one row per object with name, colour, dimensions, volume (cm3), tris. */
+/** Bill of materials CSV: one row per object with name, colour, material, size, volume, mass, triangles and group. */
 export function encodeBom(objects: readonly SceneObject[]): ArrayBuffer {
   const rows = ['Name,Color,Material,SizeX (mm),SizeY (mm),SizeZ (mm),Volume (cm3),Mass (g),Triangles,Group']
   const size = new THREE.Vector3()

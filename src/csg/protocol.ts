@@ -42,10 +42,10 @@ export interface PlacedSolid {
 
 /**
  * Node of a non-destructive CSG tree. A node is exactly one of: a parametric primitive (`spec`),
- * a fixed mesh (`solid`), or a boolean of its `children` (`op`). `matrix` places the node in its
- * parent's frame; primitives are centred on their bounding box before it is applied.
+ * a fixed mesh (`solid`), a boolean of its `children` (`op`), or a fillet or chamfer of its one
+ * child (`op` plus `radius`). `matrix` places the node in its parent's frame; primitives are
+ * centred on their bounding box before it is applied.
  */
-/** A tree node is a primitive (spec), a fixed mesh (solid), a boolean of children, or a fillet of one child. */
 export interface CsgNode {
   name: string
   matrix: number[]

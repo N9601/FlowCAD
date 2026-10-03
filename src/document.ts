@@ -18,12 +18,12 @@ export interface SceneObject {
   name: string
   color: number
   solid: SolidData
-  /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
   visible: boolean
   /** Objects sharing a groupId select and move together. */
   groupId?: number
   /** Preset material name from src/materials.ts; drives mass calculation. */
   material?: string
+  /** Present while the object is still an unmodified primitive, so its dimensions stay editable. */
   spec?: PrimitiveSpec
   /** Present on boolean results: how to rebuild `solid`, in the object's local frame. Never mutated. */
   tree?: CsgNode
@@ -322,7 +322,7 @@ export class CadDocument extends EventTarget {
     this.gizmo.setMode(mode)
   }
 
-  /** Sets the gizmo's translation snap in mm; rotate snap follows in 15-degree steps for < 5, 5 otherwise. */
+  /** Sets the gizmo's translation snap in mm. Rotation always snaps in 15-degree steps. */
   setSnap(step: number) {
     this.gizmo.setTranslationSnap(step)
   }
