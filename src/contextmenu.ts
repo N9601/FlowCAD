@@ -41,8 +41,9 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
     if (hidden.length > 0) doc.commit()
   }
 
-  const build = (obj: SceneObject | undefined) => {
-    const selection = obj ? doc.expandGroups([obj]) : [...doc.selection]
+  /** Entries for the current selection; every action works on what is selected. */
+  const build = () => {
+    const selection = [...doc.selection]
     const entries: Entry[] = []
     if (selection.length > 0) {
       entries.push({ label: 'Duplicate', keys: 'Ctrl+D', action: () => doc.duplicate() })
@@ -130,8 +131,8 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
     return entries
   }
 
-  const openAt = (x: number, y: number, obj: SceneObject | undefined) => {
-    const entries = build(obj)
+  const openAt = (x: number, y: number) => {
+    const entries = build()
     if (entries.length === 0) return
     menu.replaceChildren()
     for (const entry of entries) {
@@ -161,7 +162,6 @@ export function buildContextMenu(viewport: HTMLElement, doc: CadDocument, status
 
   target.addEventListener('contextmenu', (e) => {
     e.preventDefault()
-    // If the user right-clicked on a specific object, pass it to build(); otherwise the current selection.
-    openAt((e as MouseEvent).clientX, (e as MouseEvent).clientY, undefined)
+    openAt((e as MouseEvent).clientX, (e as MouseEvent).clientY)
   })
 }
