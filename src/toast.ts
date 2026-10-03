@@ -8,6 +8,8 @@ let host: HTMLDivElement | undefined
 function ensureHost(): HTMLDivElement {
   if (host) return host
   host = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'toasts' }))
+  // A live region, so screen readers announce each message as it appears.
+  host.setAttribute('role', 'status')
   return host
 }
 
@@ -18,6 +20,7 @@ function ensureHost(): HTMLDivElement {
 export function toast(text: string, level: ToastLevel = 'info') {
   const el = document.createElement('div')
   el.className = `toast toast-${level}`
+  if (level === 'error') el.setAttribute('role', 'alert')
   el.textContent = text
   el.addEventListener('click', () => dismiss(el))
   ensureHost().appendChild(el)
