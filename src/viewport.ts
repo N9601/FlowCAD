@@ -153,6 +153,11 @@ export class Viewport {
     return this.turntableSpeed !== 0
   }
 
+  /** Current auto-rotation in degrees per second; 0 when static. */
+  getTurntable(): number {
+    return THREE.MathUtils.radToDeg(this.turntableSpeed)
+  }
+
   /** Renders one frame synchronously and returns the canvas PNG as a data URL. */
   screenshot(): string {
     this.composer.render()

@@ -30,12 +30,12 @@ export function recordTurntable(view: Viewport, status: HTMLElement): Promise<vo
   const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4_000_000 })
   const chunks: BlobPart[] = []
   recorder.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data)
-  const wasSpinning = view.isTurntableRunning()
+  const previousSpeed = view.getTurntable()
   view.setTurntable(TURN_DEGREES_PER_SECOND)
 
   return new Promise((resolve) => {
     recorder.onstop = () => {
-      view.setTurntable(wasSpinning ? TURN_DEGREES_PER_SECOND : 0)
+      view.setTurntable(previousSpeed)
       const blob = new Blob(chunks, { type: mimeType })
       download(blob, 'flowcad-turntable.webm')
       status.textContent = `Turntable saved (${(blob.size / 1024).toFixed(0)} KB)`
