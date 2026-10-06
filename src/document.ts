@@ -423,14 +423,16 @@ export class CadDocument extends EventTarget {
 
   /**
    * Polar array around Z through `center`: for each source object, produce `count-1` rotated copies
-   * distributed across `totalDeg` degrees.
+   * distributed across `totalDeg` degrees. A full turn is divided evenly, so no copy lands back on
+   * the original; a smaller sweep puts the last copy at the end of the sweep.
    */
   arrayPolar(sources: SceneObject[], center: THREE.Vector3, count: number, totalDeg: number): SceneObject[] {
     const copies: SceneObject[] = []
+    const divisions = Math.abs(totalDeg) >= 360 ? count : count - 1
     for (const src of sources) {
       src.mesh.updateMatrix()
       for (let i = 1; i < count; i++) {
-        const angle = (totalDeg * Math.PI / 180) * (i / (count - 1))
+        const angle = (totalDeg * Math.PI / 180) * (i / divisions)
         const rot = new THREE.Matrix4().makeRotationZ(angle)
         const toOrigin = new THREE.Matrix4().makeTranslation(-center.x, -center.y, -center.z)
         const back = new THREE.Matrix4().makeTranslation(center.x, center.y, center.z)
