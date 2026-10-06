@@ -16,7 +16,7 @@ function base64(buffer: ArrayBuffer): string {
 /**
  * Emits a standalone HTML file that shows the current scene in any modern browser via Google's
  * <model-viewer> web component (loaded from a CDN). The GLB itself is inlined as a base64 data URL,
- * so the recipient just needs to open the file — no extra downloads for the geometry.
+ * so the recipient just needs to open the file, with no extra downloads for the geometry.
  */
 export function encodeStandaloneHtml(doc: CadDocument, title = 'FlowCAD Model'): ArrayBuffer {
   const parts: NamedPart[] = doc.objects

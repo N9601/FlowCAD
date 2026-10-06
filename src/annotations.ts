@@ -13,7 +13,7 @@ interface Annotation {
  * World-anchored callouts. Click **Note** in the toolbar, then click a point on any object;
  * the label projects each frame so it stays glued to that point as the camera moves. Click the
  * label's X to delete it. Annotations survive scene edits but not reloads (kept intentionally
- * lightweight — the project file remains geometry-only).
+ * lightweight: the project file remains geometry-only).
  */
 export function buildAnnotations(scene: HTMLElement, toolbar: HTMLElement, view: Viewport, doc: CadDocument, status: HTMLElement) {
   const layer = scene.appendChild(Object.assign(document.createElement('div'), { className: 'annotations' }))
