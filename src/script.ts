@@ -3,6 +3,7 @@ import { addShape, chamfer, combine, fillet } from './actions'
 import { applyMaterialPreset } from './document'
 import { dropToBed, mirror, type Axis } from './arrange'
 import { CATEGORIES } from './catalog'
+import { MATERIALS } from './materials'
 import type { BooleanOp, PrimitiveSpec } from './csg/protocol'
 import type { CadDocument, SceneObject } from './document'
 import type { Viewport } from './viewport'
@@ -86,10 +87,12 @@ class Part {
     return this
   }
 
-  /** Sets the material preset (e.g. 'Steel', 'Glass', 'Wood'); drives look and mass. */
+  /** Sets the material preset (e.g. 'Steel', 'Glass', 'Wood'); drives look and mass. Case does not matter. */
   material(name: string) {
-    this.object.material = name
-    applyMaterialPreset(this.object.mesh.material, this.object.color, name)
+    const preset = MATERIALS.find((m) => m.name.toLowerCase() === String(name).toLowerCase())
+    if (!preset) throw new Error(`material() takes one of: ${MATERIALS.map((m) => m.name).join(', ')}`)
+    this.object.material = preset.name
+    applyMaterialPreset(this.object.mesh.material, this.object.color, preset.name)
     return this
   }
 }
