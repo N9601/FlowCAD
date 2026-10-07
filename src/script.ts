@@ -75,10 +75,12 @@ class Part {
     return new Part(await chamfer(this.doc, this.object, radius), this.doc)
   }
 
-  /** Base color as "#rrggbb" or a 0xrrggbb number. */
+  /** Base color as "#rrggbb", "#rgb" or a 0xrrggbb number. */
   color(value: string | number) {
-    const hex = typeof value === 'string' ? parseInt(value.replace('#', ''), 16) : value
-    if (!Number.isFinite(hex)) throw new Error('color() takes "#rrggbb" or a 0xrrggbb number')
+    let hex = typeof value === 'number' ? value : NaN
+    const match = typeof value === 'string' ? /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value.trim()) : null
+    if (match) hex = parseInt(match[1].length === 3 ? [...match[1]].map((c) => c + c).join('') : match[1], 16)
+    if (!Number.isInteger(hex) || hex < 0 || hex > 0xffffff) throw new Error('color() takes "#rrggbb", "#rgb" or a 0xrrggbb number')
     this.object.color = hex
     applyMaterialPreset(this.object.mesh.material, hex, this.object.material)
     return this
