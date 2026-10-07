@@ -232,6 +232,8 @@ function run(wasm: Wasm, req: CsgRequest): SolidData | Outline[] {
   if (req.type === 'primitive') {
     const m = primitive(wasm, req.spec)
     try {
+      // Zero or negative sizes, or an arc sphere band outside the ball, leave nothing to place.
+      if (m.isEmpty()) throw new Error(`These ${req.spec.kind} dimensions produce an empty solid`)
       return toSolid(m)
     } finally {
       m.delete()
