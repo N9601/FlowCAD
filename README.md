@@ -309,6 +309,7 @@ FlowCAD/
 │   ├── record.ts              MediaRecorder WebM turntable capture
 │   ├── clipboard.ts           System Ctrl+C / Ctrl+V
 │   ├── storage.ts             IndexedDB autosave + snapshot history
+│   ├── prefs.ts               Guarded localStorage for UI preferences
 │   └── io/                    STL, OBJ, GLB, PLY, 3MF, SVG/DXF section, blueprint SVG,
 │                              standalone HTML viewer, .flowcad JSON, BOM CSV, ZIP, winding
 ├── tests/                     Vitest unit tests for the file formats and geometry helpers
