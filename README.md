@@ -3,6 +3,7 @@
 # FlowCAD
 
 ![Version](https://img.shields.io/badge/Version-1.0.0-4da3ff?style=flat-square)
+[![CI](https://img.shields.io/github/actions/workflow/status/N9601/FlowCAD/ci.yml?branch=master&label=CI&style=flat-square)](https://github.com/N9601/FlowCAD/actions/workflows/ci.yml)
 ![Kernel](https://img.shields.io/badge/Kernel-Manifold%20WASM-1E2761?style=flat-square)
 ![Renderer](https://img.shields.io/badge/Renderer-three.js%20r186-000000?style=flat-square&logo=three.js&logoColor=white)
 ![Language](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
