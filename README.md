@@ -24,7 +24,7 @@ Booleans, fillets, chamfers, print check, blueprint export, scripting. All clien
 
 ## Quickstart
 
-**1. Clone and run:**
+**1. Clone and run** (needs Node.js 22.12 or newer):
 
 ```bash
 git clone https://github.com/N9601/FlowCAD.git
@@ -244,6 +244,8 @@ Scene autosaves to IndexedDB every commit and restores on reload.
 ---
 
 ## Develop
+
+The toolchain (Vite 8, Vitest 5) needs Node.js 22.12 or newer; CI runs on Node 22.
 
 ```bash
 git clone https://github.com/N9601/FlowCAD.git
